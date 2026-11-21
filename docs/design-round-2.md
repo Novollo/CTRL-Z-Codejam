@@ -95,3 +95,40 @@ Draw `CAMPUS_MAP` from `shared/campusMap.ts` as an SVG (our own schematic, not a
 
 ## B1 "What do you like?": allow everything
 Add an **"Anything 🍽️"** chip first, selected by default (it means `food_types = []`). Picking a specific type unselects Anything; picking Anything clears the others. Same idea for Diet: a "No restrictions" chip first (it means `diet = []`).
+
+# Round 4 (team feedback): a complete story on three screens
+
+## No emojis anywhere
+The team finds emoji labels unprofessional. **Remove every emoji from the UI** (stats pills, demand line, "Anything", the 📍 line, feed lines, buttons, Telegram excepted). Use `<Icon name="…" />` from `web/src/ui` (custom line icons: eye, flame, bolt, users, heart, pin, utensils, clock, bag, check, checkCircle, store, courier, receipt, swap, tag, trendDown, bell, home, search, cart, user, undo, sparkle, leaf, info, x, arrowRight, chevronRight/Left, star, phone, qr). Icons in forest, ink or leaf; never coloured emoji.
+
+## The stage order is now a DELIVERY order
+Five Guys #4821 for **Alex**: $17.78 food + $2.49 delivery + $2.99 service + $2.69 tax = **$25.95**. When it's listed, the courier is released (booklet R3) and the restaurant switches it to **pickup**. The seller's S3 shows the booklet's yellow delivery warning ("Your courier is released. If nobody buys it, you pick it up at the restaurant."). On a sale the new owner gets a **new pickup code** (`listings.pickup_code`, made with `makePickupCode()`); the seller's original code ZEE-4821 is no longer valid for pickup by the buyer.
+
+## Seller (track A): a full delivery-app shell, then back
+Mimic the *structure* of a food delivery app (never Uber's name, logo or exact colours; keep the "Demo app" tag):
+1. **Home:** location bar ("McGill campus"), search field, category chips with icons, **3 restaurant cards** with big logo tile, rating, delivery time and fee (from `GET /api/restaurants`; Five Guys plus two others), a bottom tab bar (Home · Browse · Orders · Account, icons).
+2. A sticky **"Your order" banner** above the tab bar: Five Guys logo, "Preparing · arriving 12:58", chevron. Tap → slides up into **S1 order tracker** (delivery version: courier line, delivery fee row).
+3. Ctrl+Z → S2 → S3 → S4 → S5 as now.
+4. **After the end** (sold, stopped, or not sold): a "Back to home" button returns to Home. The banner now reads e.g. "Order resold on Ctrl+Z Eats · $9.40 back", or "Preparing" again if stopped.
+5. **Zee's feed: cleaner chat.** Zee's avatar once, then bubbles like a chat (rounded, white on mint, small timestamp, newest at the bottom with smooth auto-scroll, "Zee is typing…" dots between lines). Short sentences. Stats pills above it with `Icon` (eye / users / bolt), no emojis.
+
+## Restaurant tablet (track E): `/restaurant?r=r_fiveguys`
+Our design system (white, forest, mint, Inter, mono for codes), *structured* like a restaurant order manager: left sidebar (Orders, Menu, Performance: only Orders works), header "Five Guys · Order manager", tabs **Active / Completed**, order list rows (status dot, code, customer, items, fulfilment, total). Selecting an order opens a detail panel.
+- Data: `GET /api/restaurant/:id/orders` → `RestaurantOrdersResponse`; live: `connectLive({ role: "restaurant", restaurantId })` → `restaurant.order` messages carrying the full `RestaurantOrderView`; replace that order in the list.
+- Buttons: **Mark ready** (POST `API.restaurantReady`), **Picked up** (POST `API.restaurantPickedUp`).
+- The moments to animate (pop-in banner + highlight on the row):
+  1. Ctrl+Z pressed / listed: amber banner "Customer pressed Ctrl+Z: this order is being resold on Ctrl+Z Eats. Keep preparing." Fulfilment chip animates **Delivery → Pickup** with "Courier released".
+  2. Sold / taken free: a forest banner "Order changed hands", customer name **Alex → Sarah** (old one crossed out), pickup code **ZEE-4821 → ZEE-7Q2K** (old one crossed out, new one big in mono), channel badge "Delivery app → Ctrl+Z Eats".
+  3. Timeline on the right (`timeline`), newest at the bottom.
+- Works at tablet size and inside a phone frame (≥ 390 px wide: collapse the sidebar into a top bar).
+
+## `/demo` (track B): three phones
+Seller (left, `/seller`), buyer (middle, `/join`), restaurant (right, `/restaurant?r=r_fiveguys`), the same phone frames as `/stage`, scaled to fit, small labels under each ("Customer who regrets", "Student nearby", "Five Guys kitchen"). `/stage` stays as it is.
+
+## Engine (track C)
+- `/ws?role=restaurant&restaurant=<id>`: send `restaurant.order` with the full `RestaurantOrderView` of every order that changes (and all of that restaurant's open orders on connect).
+- `GET /api/restaurant/:id/orders`: the real order(s) of that restaurant + `MOCK_RESTAURANT_QUEUE(now)` for Five Guys so the list isn't empty. `POST /api/restaurant/orders/:id/ready` (same as admin order-ready) and `/picked-up` (status picked_up).
+- Build `timeline` from real events (received, Ctrl+Z pressed = undo, listed + courier released when type is delivery, locked, sold/taken free, new code, ready, picked up, stopped).
+- On sale or free take: generate `listings.pickup_code = makePickupCode()`; the `PickupPass.pickup_code` is that NEW code; the restaurant view shows the new code with the old one as `previous_pickup_code`, `customer_name` = buyer's name, `channel` "ctrlz".
+- Fulfilment: delivery orders become pickup from publish onward (courier released); back to delivery if the seller stops the listing.
+- Admin reset restores all of this.

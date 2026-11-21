@@ -70,6 +70,14 @@ export const LOST_CARD_CLOSE_SEC = 3;
 export const PICKUP_CODE_PREFIX = "ZEE-";
 /** The Telegram bot (booklet 7). Link in B2: "Or get them on Telegram →". */
 export const TELEGRAM_BOT_URL = "https://t.me/ZEats_bot";
+/** Round 4: a fresh pickup code for the new owner, e.g. "ZEE-7Q2K" (no 0/O/1/I to avoid mix-ups). */
+export function makePickupCode(random: () => number = Math.random): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let s = "";
+  for (let i = 0; i < 4; i++) s += chars[Math.floor(random() * chars.length)];
+  return PICKUP_CODE_PREFIX + s;
+}
+
 /** Stripe test card for the stage (B4). */
 export const STRIPE_TEST_CARD = "4242 4242 4242 4242";
 

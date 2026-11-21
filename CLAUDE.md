@@ -23,6 +23,7 @@ Read these rules before you change anything. They apply to every track.
 | B. Buyer web + stage | `web/src/buyer`, `web/src/stage` (the `/admin` page lives in `web/src/stage/admin`) |
 | C. Market engine | `worker/market`, `worker/api` |
 | D. Integrations | `worker/agent`, `worker/stripe`, `worker/telegram` |
+| E. Restaurant tablet (round 4) | `web/src/restaurant` |
 
 Root files (`package.json`, `wrangler.jsonc`, `vite.config.ts`, `tsconfig*.json`, `web/tsconfig.json`, `worker/index.ts`, `worker/env.ts`, `worker/integrations.ts`, `web/src/main.tsx`, `web/src/App.tsx`, `web/src/lib/*`, `web/src/ui/*` (shared mascot, sounds, confetti, motion classes), `web/src/index.css`) belong to the lead. Need a new npm package or a route? Ask in `docs/contract-requests.md`.
 

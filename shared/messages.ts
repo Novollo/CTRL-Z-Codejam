@@ -3,7 +3,7 @@
 // FROZEN: only the lead changes this file (see CLAUDE.md).
 
 import type { Fallback } from "./catalog";
-import type { ListingCard, OrderStatus, PickupPass } from "./types";
+import type { ListingCard, OrderStatus, PickupPass, RestaurantOrderView } from "./types";
 
 /** Seller. The order moved (e.g. preparing → ready). */
 export interface OrderStatusMsg {
@@ -93,6 +93,16 @@ export interface ListingClosedMsg {
   free_until?: number; // epoch ms
 }
 
+/**
+ * Restaurant tablet (round 4). The FULL current view of one order, sent whenever anything about it changes
+ * (status, Ctrl+Z pressed, listed, courier released, locked, sold → new name + new code, closed, stopped).
+ * The restaurant screen just replaces its copy of that order.
+ */
+export interface RestaurantOrderMsg {
+  type: "restaurant.order";
+  order: RestaurantOrderView;
+}
+
 export type LiveMessage =
   | OrderStatusMsg
   | ListingTickMsg
@@ -102,9 +112,10 @@ export type LiveMessage =
   | ListingLockedMsg
   | ListingUnlockedMsg
   | ListingSoldMsg
-  | ListingClosedMsg;
+  | ListingClosedMsg
+  | RestaurantOrderMsg;
 
 export type LiveMessageType = LiveMessage["type"];
 
 /** Who is on the other end of a /ws connection. */
-export type LiveRole = "seller" | "buyer";
+export type LiveRole = "seller" | "buyer" | "restaurant";

@@ -43,6 +43,7 @@ export const toOrder = (r: Row): Order => ({
   status: r.status as Order["status"],
   ready_at: (r.ready_at as number | null) ?? null,
   pickup_code: r.pickup_code as string,
+  customer_name: (r.customer_name as string) ?? "",
 });
 
 export const toListing = (r: Row): Listing => ({
@@ -66,6 +67,7 @@ export const toListing = (r: Row): Listing => ({
   lock_until: (r.lock_until as number | null) ?? null,
   sold_price: (r.sold_price as number | null) ?? null,
   buyer_id: (r.buyer_id as string | null) ?? null,
+  pickup_code: (r.pickup_code as string | null) ?? null,
 });
 
 export const toBuyer = (r: Row): Buyer => ({

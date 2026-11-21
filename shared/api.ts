@@ -4,7 +4,7 @@
 
 import type { BuyerDiet, CampusSpot, DropSpeed, Fallback, FoodType, ListingDiet, Tag } from "./catalog";
 import type { AgentMode } from "./constants";
-import type { AgentSource, Buyer, ListingCard, Order, OrderType, PickupPass, Restaurant } from "./types";
+import type { AgentSource, Buyer, ListingCard, Order, OrderType, PickupPass, Restaurant, RestaurantOrderView } from "./types";
 
 /** Buyer calls send their token in this header (saved in the browser by POST /api/buyers). */
 export const BUYER_TOKEN_HEADER = "x-buyer-token";
@@ -14,6 +14,8 @@ export const PAGE = {
   join: "/join",
   paid: (listingId: string) => `/join?paid=${encodeURIComponent(listingId)}`,
   buy: (listingId: string, buyerToken: string) => `/buy/${encodeURIComponent(listingId)}?t=${encodeURIComponent(buyerToken)}`,
+  demo: "/demo",             // round 4: three phones: seller · buyer · restaurant
+  restaurant: "/restaurant", // round 4: the restaurant tablet (?r=r_fiveguys)
 } as const;
 
 /** Paths. Use these builders, never hand-written strings. */
@@ -38,7 +40,11 @@ export const API = {
   adminState: () => `/api/admin/state`,                               // GET  (/admin: agent mode + buyers)
   adminAgentMode: () => `/api/admin/agent-mode`,                      // POST (/admin: switch AGENT_MODE)
   health: () => `/api/health`,
-  restaurants: () => `/api/restaurants`,                              // GET  (round 2: logos for the buyer side)                                        // GET  (is the Worker + DB up?)
+  restaurants: () => `/api/restaurants`,
+  restaurantOrders: (restaurantId: string) => `/api/restaurant/${restaurantId}/orders`, // GET  (round 4)
+  restaurantReady: (orderId: string) => `/api/restaurant/orders/${orderId}/ready`,      // POST (round 4) "Mark ready"
+  restaurantPickedUp: (orderId: string) => `/api/restaurant/orders/${orderId}/picked-up`, // POST (round 4) "Picked up"
+  wsRestaurant: (restaurantId: string) => `/ws?role=restaurant&restaurant=${encodeURIComponent(restaurantId)}`,                              // GET  (round 2: logos for the buyer side)                                        // GET  (is the Worker + DB up?)
   // Live connection
   wsSeller: (orderId: string) => `/ws?role=seller&order=${encodeURIComponent(orderId)}`,
   wsBuyer: (buyerId: string) => `/ws?role=buyer&id=${encodeURIComponent(buyerId)}`,
@@ -177,6 +183,12 @@ export interface AgentModeRequest {
 /** GET /api/restaurants → every restaurant (round 2: "campus favourites" logo row on the buyer side). */
 export interface RestaurantsResponse {
   restaurants: Restaurant[];
+}
+
+/** GET /api/restaurant/:restaurantId/orders → the restaurant tablet (round 4). Newest first. */
+export interface RestaurantOrdersResponse {
+  restaurant: Restaurant;
+  orders: RestaurantOrderView[];
 }
 
 /** GET /api/health */

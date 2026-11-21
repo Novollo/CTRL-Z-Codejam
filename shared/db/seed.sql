@@ -36,14 +36,14 @@ INSERT INTO walk_times (spot, restaurant_id, minutes) VALUES
   ('redpath', 'r_fiveguys', 7), ('redpath', 'r_dominos', 7), ('redpath', 'r_timhortons', 4), ('redpath', 'r_mcgillpizza', 5), ('redpath', 'r_onigiri', 9),
   ('mcconnell', 'r_fiveguys', 9), ('mcconnell', 'r_dominos', 9), ('mcconnell', 'r_timhortons', 6), ('mcconnell', 'r_mcgillpizza', 7), ('mcconnell', 'r_onigiri', 10);
 
--- The stage order (booklet 5 S1, 14.1): Five Guys pickup, #4821, in "Preparing".
--- food_price 17.78 = 11.49 + 6.29. total 23.46 = 17.78 + 2.99 service + 2.69 tax.
+-- The stage order: Five Guys #4821, in "Preparing". Round 4: a DELIVERY order (was pickup in the booklet).
+-- food_price 17.78 = 11.49 + 6.29. total 25.95 = 17.78 + 2.49 delivery + 2.99 service + 2.69 tax.
 -- ready_at is set by /api/admin/reset (now + 4 min, scaled by DEMO_SPEED).
-INSERT INTO orders (id, restaurant_id, items, food_price, fees, total, type, status, ready_at, pickup_code) VALUES
+INSERT INTO orders (id, restaurant_id, items, food_price, fees, total, type, status, ready_at, pickup_code, customer_name) VALUES
   ('ord_4821', 'r_fiveguys',
    '[{"name":"Little Cheeseburger","price":11.49,"description":"One hand-formed beef patty, American cheese, pickles, grilled onions, ketchup and mustard on a toasted sesame bun."},{"name":"Cajun Fries (regular)","price":6.29,"description":"Fresh-cut Idaho potatoes, skin on, cooked in peanut oil and dusted with Cajun spice. Regular size."}]',
-   17.78, '{"service_fee":2.99,"delivery_fee":0,"tax":2.69}', 23.46,
-   'pickup', 'preparing', NULL, 'ZEE-4821');
+   17.78, '{"service_fee":2.99,"delivery_fee":2.49,"tax":2.69}', 25.95,
+   'delivery', 'preparing', NULL, 'ZEE-4821', 'Alex');
 
 -- The teammate's stage buyer (booklet 12.1): Trottier, 10 min, Burgers, $12.
 INSERT INTO buyers (id, token, name, notify_on, spot, lat, lng, max_walk_min, food_types, diet, max_price, telegram_chat_id) VALUES

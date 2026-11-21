@@ -51,7 +51,8 @@ export interface Order {
   type: OrderType;
   status: OrderStatus;
   ready_at: number | null;  // epoch ms (expected or actual ready time)
-  pickup_code: string;      // "ZEE-4821"
+  pickup_code: string;      // "ZEE-4821": the ORIGINAL customer's code (seller's own pickup)
+  customer_name: string;    // round 4: the original customer (the seller), e.g. "Alex"
 }
 
 export type ListingStatus = "draft" | "live" | "locked" | "sold" | "free" | "closed" | "donated" | "stopped";
@@ -78,6 +79,7 @@ export interface Listing {
   lock_until: number | null;// epoch ms, real time
   sold_price: number | null;
   buyer_id: string | null;  // winning buyer
+  pickup_code: string | null; // round 4: NEW code generated for the winning buyer at sale (makePickupCode); null before
 }
 
 export interface Buyer {
@@ -149,4 +151,38 @@ export interface PickupPass {
   pickup_code: string;      // "ZEE-4821"
   name_on_order: string;    // the buyer's first name
   pickup_by: number;        // epoch ms
+}
+
+// ---- Restaurant view (round 4) --------------------------------------------------
+// What the restaurant tablet sees for one order. Built by Market from orders + listings + buyers.
+
+export type Fulfilment = "delivery" | "pickup";
+/** Which platform the order belongs to now: the original delivery app, or Ctrl+Z Eats after a resale. */
+export type OrderChannel = "delivery_app" | "ctrlz";
+
+export interface RestaurantTimelineEntry {
+  at: number;   // epoch ms
+  text: string; // "Order received", "Customer pressed Ctrl+Z", "Courier released: now pickup", "Resold on Ctrl+Z Eats to Sarah", "New pickup code ZEE-7Q2K"
+  kind: "info" | "ctrlz" | "handover" | "done";
+}
+
+export interface RestaurantOrderView {
+  order_id: string;
+  short_code: string;             // "#4821"
+  customer_name: string;          // original customer, or the new buyer after the handover
+  items: OrderItem[];
+  food_price: number;
+  status: OrderStatus;            // received / preparing / ready / picked_up
+  fulfilment: Fulfilment;         // delivery until the courier is released (listing published), then pickup
+  channel: OrderChannel;          // "ctrlz" once sold or given free on Ctrl+Z Eats
+  pickup_code: string;            // the code that is valid NOW
+  previous_pickup_code: string | null; // shown crossed out after the handover
+  ctrlz: null | {                 // set while/after the order is on Ctrl+Z Eats
+    listing_id: string;
+    status: ListingStatus;
+    price: number | null;         // live price while on the market
+    sold_price: number | null;
+  };
+  timeline: RestaurantTimelineEntry[]; // oldest first
+  placed_at: number;              // epoch ms
 }
