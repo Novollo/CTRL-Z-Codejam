@@ -3,7 +3,7 @@
 An undo button for a food order you can no longer cancel.
 
 **Live:** https://ctrlz-eats.stalerole.workers.dev (try `/stage`)
- Spec: [`docs/booklet.md`](docs/booklet.md). Agent rules: [`CLAUDE.md`](CLAUDE.md).
+Spec: [`docs/booklet.md`](docs/booklet.md). Agent rules: [`CLAUDE.md`](CLAUDE.md).
 
 ## Folders
 | Folder | What | Owner |
