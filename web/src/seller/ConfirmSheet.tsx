@@ -17,12 +17,14 @@ const demandLine = (sheet: UndoResponse) => {
 export function ConfirmSheet({
   sheet,
   items,
+  logoUrl,
   busy,
   onList,
   onNeverMind,
 }: {
   sheet: UndoResponse;
   items: OrderItem[];
+  logoUrl: string;
   busy: boolean;
   onList: (floor: number, fallback: Fallback) => void;
   onNeverMind: () => void;
@@ -38,7 +40,14 @@ export function ConfirmSheet({
         <div className="flex-1 space-y-6 overflow-y-auto px-5 pt-4 pb-4">
           {/* 1. Listing preview card */}
           <section className="ui-slide-up ui-delay-1 rounded-card border border-line p-4">
-            <h2 className="text-h2 leading-tight text-ink">{sheet.title}</h2>
+            <div className="flex items-center gap-3">
+              {logoUrl && (
+                <span className="flex h-11 w-16 shrink-0 items-center justify-center rounded-card border border-line bg-white p-1">
+                  <img src={logoUrl} alt="" className="h-full w-full object-contain" />
+                </span>
+              )}
+              <h2 className="text-h2 leading-tight text-ink">{sheet.title}</h2>
+            </div>
             <p className="mt-1 text-body text-stone">{sheet.selling_line}</p>
             <ul className="mt-3 space-y-2 border-t border-line pt-3">
               {items.map((item) => (
