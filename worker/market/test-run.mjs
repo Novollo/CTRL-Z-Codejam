@@ -150,7 +150,7 @@ async function main() {
   await alice.waitFor("tick on the open card", of("listing.tick", id));
   check(true, "buyers with the card get ticks");
   const card = await call("GET", `/api/listings/${id}`, undefined, a.token);
-  check(card.status === 200 && card.data.listing.walk_min === 6 && card.data.reason === pingA.reason, "GET listing card for Alice (Telegram link)");
+  check(card.status === 200 && card.data.listing.walk_min === 6 && card.data.reason === pingA.reason && card.data.buyer_id === a.id, "GET listing card for Alice (Telegram link), with her buyer_id");
 
   if (SCENARIO === "stop") return stopScenario(id, seller, alice);
   if (SCENARIO === "close") return closeScenario(id, speed, seller, alice, bob, a, b);
@@ -164,6 +164,8 @@ async function main() {
   check(lockedB.lock_until === buyA.data.lock_until, "Bob sees listing.locked (B-hold)");
   await seller.waitFor("listing.locked", of("listing.locked", id));
   check((await call("GET", `/api/listings/${id}/pass`, undefined, a.token)).status === 404, "no pass before payment");
+  const lockedCard = await call("GET", `/api/listings/${id}`, undefined, b.token);
+  check(lockedCard.data?.listing.status === "locked" && lockedCard.data.listing.lock_until === buyA.data.lock_until, "GET listing card while locked → status locked + lock_until");
 
   let winner = { name: "Alice", token: a.token, live: alice, price: buyA.data.price };
   let loser = { name: "Bob", token: b.token, live: bob };

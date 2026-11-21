@@ -82,9 +82,9 @@ export class Market extends DurableObject<Env> {
     // Screens only listen. Actions come over HTTP.
   }
 
-  async webSocketClose(ws: WebSocket, code: number): Promise<void> {
+  async webSocketClose(ws: WebSocket): Promise<void> {
     try {
-      ws.close(code === 1005 ? 1000 : code, "bye");
+      ws.close(1000, "bye");
     } catch {
       // already closed
     }
@@ -255,22 +255,27 @@ export class Market extends DurableObject<Env> {
       .bind(listingId, buyerId, price)
       .run();
 
-    let checkoutUrl = origin + PAGE.paid(listingId); // if Stripe fails, /admin → "Mark paid" still works (12.3)
+    let checkout: { url: string; session_id: string };
     try {
-      const checkout = await createCheckout(this.env, { listing_id: listingId, buyer_id: buyerId, amount: price, title: listing.title, origin });
-      checkoutUrl = checkout.url;
-      await this.db
-        .prepare("UPDATE payments SET stripe_session_id = ? WHERE rowid = (SELECT rowid FROM payments WHERE listing_id = ? AND buyer_id = ? ORDER BY rowid DESC LIMIT 1)")
-        .bind(checkout.session_id, listingId, buyerId)
-        .run()
-        .catch(() => null); // session id already used (placeholder ids repeat): not needed to confirm the sale
+      checkout = await createCheckout(this.env, { listing_id: listingId, buyer_id: buyerId, amount: price, title: listing.title, origin });
     } catch (e) {
+      // Stripe failed: release the lock at once (nobody else saw it yet) and answer a clean 5xx.
       console.error("createCheckout failed", e);
+      await this.db.batch([
+        this.db.prepare("UPDATE listings SET status = 'live', locked_by = NULL, lock_until = NULL WHERE id = ? AND status = 'locked' AND locked_by = ?").bind(listingId, buyerId),
+        this.db.prepare("UPDATE payments SET status = 'expired' WHERE listing_id = ? AND buyer_id = ? AND status = 'pending'").bind(listingId, buyerId),
+      ]);
+      return fail(502, "payment is not available right now");
     }
+    await this.db
+      .prepare("UPDATE payments SET stripe_session_id = ? WHERE rowid = (SELECT rowid FROM payments WHERE listing_id = ? AND buyer_id = ? ORDER BY rowid DESC LIMIT 1)")
+      .bind(checkout.session_id, listingId, buyerId)
+      .run()
+      .catch(() => null); // session id already used (placeholder ids repeat): not needed to confirm the sale
 
     const locked: LiveMessage = { type: "listing.locked", listing_id: listingId, lock_until: lockUntil };
     await this.sendToWatchers(c, locked, locked);
-    return { status: 200, body: { kind: "locked", checkout_url: checkoutUrl, lock_until: lockUntil, price } };
+    return { status: 200, body: { kind: "locked", checkout_url: checkout.url, lock_until: lockUntil, price } };
   }
 
   /** GET /api/listings/:id: the offer card for one buyer (B3 from a Telegram link). */
@@ -287,7 +292,7 @@ export class Market extends DurableObject<Env> {
       .first<{ reason: string }>();
     const card = this.card(c, now, walk);
     const reason = ping?.reason ?? matchReason({ ...buyer, notify_on: true }, c.listing, card.price, walk, true) ?? "";
-    return { status: 200, body: { listing: card, reason } };
+    return { status: 200, body: { listing: card, reason, buyer_id: buyerId } };
   }
 
   /** Re-run matching for one buyer (profile changed, booklet 9.3). Exported as notifyBuyerChanged. */
