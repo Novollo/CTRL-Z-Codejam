@@ -4,7 +4,7 @@
 import { FOOD_TYPES, NUT_WORDS, TAG_LABELS } from "@shared/catalog";
 import type { FoodType } from "@shared/catalog";
 import {
-  DEFAULT_DEMO_SPEED, FLOOR_MAX_SHARE, FLOOR_MIN_SHARE, T_FLOOR_MIN, T_FLOOR_SHORT_LISTING_SHARE,
+  DEFAULT_DEMO_SPEED, DEMO_CROWD, FLOOR_MAX_SHARE, FLOOR_MIN_SHARE, T_FLOOR_MIN, T_FLOOR_SHORT_LISTING_SHARE,
   WALK_DETOUR_FACTOR, WALK_METRES_PER_MIN, roundPrice, roundPriceDown,
 } from "@shared/constants";
 import type { Buyer, Listing, Restaurant } from "@shared/types";
@@ -23,17 +23,35 @@ export const storySecondsLeft = (until: number, now: number, speed: number): num
 
 // ---- Price (booklet 9.2) ----
 
-/** Price on the straight line from start to floor, rounded down to $0.10. */
-export function priceAt(listing: Listing, now: number, speed: number): number {
+/** How far along the way to the floor the listing is: 0 at publish, 1 from T_floor on (9.2). */
+export function floorShare(listing: Listing, now: number, speed: number): number {
+  if (listing.status === "free") return 1;
   const opens = listing.opens_at ?? now;
   const closes = listing.closes_at ?? now;
   const storyMin = ((now - opens) * speed) / 60_000;
   const lengthMin = ((closes - opens) * speed) / 60_000;
   let tFloor = T_FLOOR_MIN[listing.drop_speed];
   if (lengthMin < tFloor) tFloor = T_FLOOR_SHORT_LISTING_SHARE * lengthMin;
-  const share = tFloor > 0 ? Math.min(1, Math.max(0, storyMin / tFloor)) : 1;
-  const price = listing.start_price - (listing.start_price - listing.floor_price) * share;
+  return tFloor > 0 ? Math.min(1, Math.max(0, storyMin / tFloor)) : 1;
+}
+
+/** Price on the straight line from start to floor, rounded down to $0.10. */
+export function priceAt(listing: Listing, now: number, speed: number): number {
+  const price = listing.start_price - (listing.start_price - listing.floor_price) * floorShare(listing, now, speed);
   return Math.max(listing.floor_price, roundPriceDown(price));
+}
+
+// ---- Social proof (round 2): the simulated campus crowd added on top of the real counts ----
+
+/** The crowd for this listing now: grows from 0 at publish to the max at the floor time; watching wobbles. */
+export function demoCrowd(listing: Listing, now: number, speed: number): { seen: number; watching: number; interested: number } {
+  const share = floorShare(listing, now, speed);
+  const seen = Math.round(DEMO_CROWD.seen_max * share);
+  const interested = Math.round(DEMO_CROWD.interested_max * share);
+  const storySec = ((now - (listing.opens_at ?? now)) * speed) / 1000;
+  const wave = 0.5 + 0.3 * Math.sin(storySec / 23) + 0.2 * Math.sin(storySec / 7); // 0..1, smooth, never periodic-looking
+  const wobble = DEMO_CROWD.watching_min + Math.round((DEMO_CROWD.watching_max - DEMO_CROWD.watching_min) * wave);
+  return { seen, interested, watching: Math.min(wobble, seen, interested) }; // never more watching than seen or interested
 }
 
 /** Allowed floor range: 30% rounded UP, 70% rounded DOWN, to $0.10 (lead decision 13). */

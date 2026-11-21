@@ -7,6 +7,8 @@
 //   node worker/market/test-run.mjs --close=pickup_self nobody buys → seller picks it up                     (~4 min)
 //   node worker/market/test-run.mjs --close=donate      nobody buys → donated                               (~4 min)
 //   add --base=http://localhost:8787 to point somewhere else (default: the worker on 8787)
+//   add --crowd=off when the worker runs with DEMO_CROWD "off" (default "on", as in wrangler.jsonc),
+//       e.g. npx wrangler dev --port 8798 --var DEMO_CROWD:off  →  node worker/market/test-run.mjs --crowd=off --base=http://localhost:8798
 //
 // WARNING: it calls /api/admin/reset first (wipes listings, pings and payments). Run it on your laptop, not on stage.
 // Plain Node 22 (built-in fetch + WebSocket). Exit code 0 = every check passed.
@@ -18,6 +20,7 @@ const flag = (name) => args.includes(`--${name}`);
 const BASE = (arg("base") ?? "http://localhost:8787").replace(/\/$/, "");
 const ORDER = "ord_4821";
 const CLOSE = arg("close");
+const CROWD = arg("crowd") ?? "on";
 const SCENARIO = CLOSE ? "close" : flag("lock") ? "lock" : flag("stop") ? "stop" : "sold";
 
 const t0 = Date.now();
@@ -25,6 +28,7 @@ const clock = () => `${((Date.now() - t0) / 1000).toFixed(1).padStart(5)}s`;
 const log = (...parts) => console.log(clock(), ...parts);
 let failures = 0;
 const created = []; // this run's test buyers
+const screens = []; // this run's live connections
 const check = (ok, label) => {
   console.log(clock(), ok ? "  ✔" : "  ✘", label);
   if (!ok) failures++;
@@ -81,7 +85,7 @@ const of = (type, listingId) => (m) => m.type === type && (!listingId || m.listi
 
 // ---- The run ----
 async function main() {
-  log(`Track C test "${SCENARIO}${CLOSE ? ` ${CLOSE}` : ""}" against ${BASE}`);
+  log(`Track C test "${SCENARIO}${CLOSE ? ` ${CLOSE}` : ""}" against ${BASE}, DEMO_CROWD expected ${CROWD}`);
 
   const health = await call("GET", "/api/health");
   check(health.status === 200 && health.data?.mode === "real", `health: ${JSON.stringify(health.data)}`);
@@ -105,6 +109,7 @@ async function main() {
   const seller = live("seller", `role=seller&order=${ORDER}`);
   const alice = live("alice", `role=buyer&id=${a.id}`);
   const bob = live("bob", `role=buyer&id=${b.id}`);
+  screens.push(seller, alice, bob);
   await Promise.all([seller.opened, alice.opened, bob.opened]);
   log("3 live connections open (seller, Alice, Bob)");
   const status0 = await seller.waitFor("order.status", of("order.status"));
@@ -149,6 +154,7 @@ async function main() {
   check(reach.reached >= 2, `seller: "Sent to ${reach.reached} people nearby"`);
   await alice.waitFor("tick on the open card", of("listing.tick", id));
   check(true, "buyers with the card get ticks");
+  await statsChecks(id, seller, alice);
   const card = await call("GET", `/api/listings/${id}`, undefined, a.token);
   check(card.status === 200 && card.data.listing.walk_min === 6 && card.data.reason === pingA.reason && card.data.buyer_id === a.id, "GET listing card for Alice (Telegram link), with her buyer_id");
 
@@ -199,6 +205,34 @@ async function main() {
   check((await call("POST", `/api/orders/${ORDER}/undo`)).status === 409, "undo a sold order → 409");
 }
 
+/** Round 2: listing.stats on every tick to the seller and card holders; reach = seen; the invariants hold. */
+async function statsChecks(id, seller, alice) {
+  await alice.waitFor("listing.stats on the card", of("listing.stats", id));
+  if (CROWD === "off") {
+    const real = await seller.waitFor("stats with both pings", (m) => m.type === "listing.stats" && m.listing_id === id && m.seen === 2);
+    log(`  stats (real only): seen ${real.seen} · watching ${real.watching} · interested ${real.interested}`);
+    check(real.watching === 2 && real.interested >= 2, "crowd off: seen 2, watching 2 (Alice and Bob), interested ≥ 2");
+  } else {
+    await seller.waitFor("stats with the crowd", (m) => m.type === "listing.stats" && m.listing_id === id && m.seen > 2, 20_000);
+    const last = seller.msgs.filter(of("listing.stats", id)).at(-1);
+    log(`  stats (real + crowd): seen ${last.seen} · watching ${last.watching} · interested ${last.interested}`);
+    check(last.seen > 2, "crowd on: seen grows above the 2 real pings");
+  }
+  const stats = seller.msgs.filter(of("listing.stats", id));
+  log(`  seller got ${stats.length} stats so far (seen: ${stats.map((m) => m.seen).join(",")})`);
+  check(stats.length >= 2, "seller gets listing.stats on every tick");
+  // Every reach follows its stats message and carries the same `seen`.
+  const pairs = seller.msgs.map((m, i) => [seller.msgs[i - 1], m]).filter(([, m]) => m.type === "listing.reach" && m.listing_id === id);
+  check(pairs.length > 0 && pairs.every(([prev, m]) => prev?.type === "listing.stats" && prev.seen === m.reached), "listing.reach.reached = stats.seen");
+}
+
+/** Checked at the end of every run, over every stats message anyone got. */
+function checkInvariants(...screens) {
+  const all = screens.flatMap((s) => s.msgs.filter((m) => m.type === "listing.stats"));
+  const bad = all.filter((m) => !(m.interested >= m.watching && m.seen >= m.watching && m.watching >= 0));
+  check(all.length > 0 && bad.length === 0, `invariants interested ≥ watching and seen ≥ watching hold in all ${all.length} stats (${bad.length} bad)`);
+}
+
 async function stopScenario(id, seller, alice) {
   const stop = await call("POST", `/api/listings/${id}/stop`);
   check(stop.status === 200 && stop.data.status === "stopped", "Stop listing → stopped");
@@ -235,6 +269,8 @@ async function closeScenario(id, speed, seller, alice, bob, a, b) {
   check((await call("POST", `/api/listings/${id}/buy`, undefined, b.token)).status === 409, "Bob taps after → 409");
   const soldS = await seller.waitFor("listing.sold", of("listing.sold", id));
   check(soldS.sold_price === 0 && !soldS.pass, "seller: listing.sold at $0, no pass");
+  const peak = seller.msgs.filter(of("listing.stats", id)).at(-1);
+  log(`  last stats: seen ${peak.seen} · watching ${peak.watching} · interested ${peak.interested}`);
   await bob.waitFor("listing.sold", of("listing.sold", id));
 }
 
@@ -244,6 +280,7 @@ main()
     failures++;
   })
   .finally(async () => {
+    if (screens.length) checkInvariants(...screens);
     // Leave no active test buyers behind: turn their pings off.
     for (const buyer of created) await call("PATCH", `/api/buyers/${buyer.id}`, { notify_on: false }, buyer.token).catch(() => null);
     console.log(failures === 0 ? `\nPASS: all checks passed in ${clock().trim()}` : `\nFAIL: ${failures} check(s) failed`);

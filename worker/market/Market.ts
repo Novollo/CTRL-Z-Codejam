@@ -28,7 +28,7 @@ import {
   MINUTES_UNTIL_READY, freshReadyAt, getActiveBuyers, getActiveListings, getBuyer, getListing, getOpenListingForOrder,
   getOrder, getPass, getRestaurant, getWalkTable,
 } from "./db";
-import { clipFloor, demoSpeed, matchReason, priceAt, storyMinToMs, storySecondsLeft, walkMinutes } from "./rules";
+import { clipFloor, demoCrowd, demoSpeed, matchReason, priceAt, storyMinToMs, storySecondsLeft, walkMinutes } from "./rules";
 
 /** What an RPC method returns: the HTTP status and JSON body the API should send. */
 export interface Reply<T> {
@@ -90,7 +90,7 @@ export class Market extends DurableObject<Env> {
     }
   }
 
-  /** A seller screen connected: send the order status and, if a listing runs, its price, reach and lock. */
+  /** A seller screen connected: send the order status and, if a listing runs, its price, stats, reach and lock. */
   private async greetSeller(ws: WebSocket, orderId: string): Promise<void> {
     const order = await getOrder(this.db, orderId);
     if (!order) return;
@@ -99,7 +99,8 @@ export class Market extends DurableObject<Env> {
     if (!listing || listing.status === "draft") return;
     const now = Date.now();
     sendOne(ws, { type: "listing.tick", listing_id: listing.id, price: this.price(listing, now), seconds_left: this.secondsLeft(listing, now) });
-    sendOne(ws, { type: "listing.reach", listing_id: listing.id, reached: await this.reachCount(listing.id) });
+    const c = await this.load(listing.id, listing);
+    if (c) await this.sendStats(c, now);
     if (listing.status === "locked" && listing.lock_until) {
       sendOne(ws, { type: "listing.locked", listing_id: listing.id, lock_until: listing.lock_until });
     }
@@ -255,27 +256,30 @@ export class Market extends DurableObject<Env> {
       .bind(listingId, buyerId, price)
       .run();
 
-    let checkout: { url: string; session_id: string };
-    try {
-      checkout = await createCheckout(this.env, { listing_id: listingId, buyer_id: buyerId, amount: price, title: listing.title, origin });
-    } catch (e) {
-      // Stripe failed: release the lock at once (nobody else saw it yet) and answer a clean 5xx.
-      console.error("createCheckout failed", e);
-      await this.db.batch([
-        this.db.prepare("UPDATE listings SET status = 'live', locked_by = NULL, lock_until = NULL WHERE id = ? AND status = 'locked' AND locked_by = ?").bind(listingId, buyerId),
-        this.db.prepare("UPDATE payments SET status = 'expired' WHERE listing_id = ? AND buyer_id = ? AND status = 'pending'").bind(listingId, buyerId),
-      ]);
-      return fail(502, "payment is not available right now");
+    // No Stripe key (a laptop without .dev.vars): skip Stripe, /admin "Mark paid" finishes the sale (12.3).
+    let checkoutUrl = origin + PAGE.paid(listingId);
+    if (this.env.STRIPE_SECRET_KEY) {
+      try {
+        const checkout = await createCheckout(this.env, { listing_id: listingId, buyer_id: buyerId, amount: price, title: listing.title, origin });
+        checkoutUrl = checkout.url;
+        await this.db
+          .prepare("UPDATE payments SET stripe_session_id = ? WHERE rowid = (SELECT rowid FROM payments WHERE listing_id = ? AND buyer_id = ? ORDER BY rowid DESC LIMIT 1)")
+          .bind(checkout.session_id, listingId, buyerId)
+          .run();
+      } catch (e) {
+        // Stripe failed: release the lock at once (it was not announced yet) and answer a clean 5xx.
+        console.error("createCheckout failed", e);
+        await this.db.batch([
+          this.db.prepare("UPDATE listings SET status = 'live', locked_by = NULL, lock_until = NULL WHERE id = ? AND status = 'locked' AND locked_by = ?").bind(listingId, buyerId),
+          this.db.prepare("UPDATE payments SET status = 'expired' WHERE listing_id = ? AND buyer_id = ? AND status = 'pending'").bind(listingId, buyerId),
+        ]);
+        return fail(502, "payment is not available right now");
+      }
     }
-    await this.db
-      .prepare("UPDATE payments SET stripe_session_id = ? WHERE rowid = (SELECT rowid FROM payments WHERE listing_id = ? AND buyer_id = ? ORDER BY rowid DESC LIMIT 1)")
-      .bind(checkout.session_id, listingId, buyerId)
-      .run()
-      .catch(() => null); // session id already used (placeholder ids repeat): not needed to confirm the sale
 
     const locked: LiveMessage = { type: "listing.locked", listing_id: listingId, lock_until: lockUntil };
     await this.sendToWatchers(c, locked, locked);
-    return { status: 200, body: { kind: "locked", checkout_url: checkout.url, lock_until: lockUntil, price } };
+    return { status: 200, body: { kind: "locked", checkout_url: checkoutUrl, lock_until: lockUntil, price } };
   }
 
   /** GET /api/listings/:id: the offer card for one buyer (B3 from a Telegram link). */
@@ -439,6 +443,7 @@ export class Market extends DurableObject<Env> {
     await this.sendToWatchers(c, tick, tick);
 
     if (c.listing.status === "live" || c.listing.status === "free") await this.matchListing(c, now, price);
+    await this.sendStats(c, now);
     return true;
   }
 
@@ -577,14 +582,13 @@ export class Market extends DurableObject<Env> {
       getWalkTable(this.db, c.restaurant.id),
       this.pingedBuyers(c.listing.id),
     ]);
-    let sent = 0;
     for (const buyer of buyers) {
       if (pinged.has(buyer.id)) continue; // rule 2 (also covers "Not now")
       const walk = walkMinutes(buyer, c.restaurant, walkTable);
       const reason = matchReason(buyer, c.listing, price, walk, c.listing.status === "free");
-      if (reason && (await this.ping(c, buyer, reason, walk, now))) sent++;
+      if (reason) await this.ping(c, buyer, reason, walk, now);
     }
-    if (sent > 0) await this.sendReach(c);
+    // The tick sends listing.stats + listing.reach right after this.
   }
 
   /** Check one buyer against every running listing. */
@@ -599,7 +603,7 @@ export class Market extends DurableObject<Env> {
       const walk = walkMinutes(buyer, c.restaurant, await getWalkTable(this.db, c.restaurant.id));
       const price = this.price(listing, now);
       const reason = matchReason(buyer, listing, price, walk, listing.status === "free");
-      if (reason && (await this.ping(c, buyer, reason, walk, now))) await this.sendReach(c);
+      if (reason && (await this.ping(c, buyer, reason, walk, now))) await this.sendStats(c, now);
     }
   }
 
@@ -643,12 +647,41 @@ export class Market extends DurableObject<Env> {
     return new Set(results.map((r) => r.buyer_id));
   }
 
-  private async reachCount(listingId: string): Promise<number> {
-    return (await this.pingedBuyers(listingId)).size;
+  // =========================================================================
+  // Social proof (round 2, docs/design-round-2.md "Engine")
+  // =========================================================================
+
+  /**
+   * Real counts, plus the simulated crowd when DEMO_CROWD is "on":
+   * - seen = people pinged · watching = card holders with the page open now
+   * - interested = active buyers whose filters match this listing, price ignored
+   * Always interested ≥ watching and seen ≥ watching.
+   */
+  private async stats(c: Ctx, now: number): Promise<{ seen: number; watching: number; interested: number }> {
+    const [pinged, holders, buyers, walkTable] = await Promise.all([
+      this.pingedBuyers(c.listing.id),
+      this.cardHolders(c.listing.id),
+      getActiveBuyers(this.db),
+      getWalkTable(this.db, c.restaurant.id),
+    ]);
+    let seen = pinged.size;
+    let watching = holders.filter((id) => this.ctx.getWebSockets(`buyer:${id}`).length > 0).length;
+    let interested = buyers.filter((b) => matchReason(b, c.listing, 0, walkMinutes(b, c.restaurant, walkTable), true) != null).length;
+    if (this.env.DEMO_CROWD === "on") {
+      const crowd = demoCrowd(c.listing, now, this.speed);
+      seen += crowd.seen;
+      watching += crowd.watching;
+      interested += crowd.interested;
+    }
+    return { seen: Math.max(seen, watching), watching, interested: Math.max(interested, watching) };
   }
 
-  private async sendReach(c: Ctx): Promise<void> {
-    this.send(`seller:${c.order.id}`, { type: "listing.reach", listing_id: c.listing.id, reached: await this.reachCount(c.listing.id) });
+  /** listing.stats to the seller and every card holder; listing.reach (= seen) to the seller. */
+  private async sendStats(c: Ctx, now: number): Promise<void> {
+    const { seen, watching, interested } = await this.stats(c, now);
+    const msg: LiveMessage = { type: "listing.stats", listing_id: c.listing.id, seen, watching, interested };
+    await this.sendToWatchers(c, msg, msg);
+    this.send(`seller:${c.order.id}`, { type: "listing.reach", listing_id: c.listing.id, reached: seen });
   }
 
   // =========================================================================
