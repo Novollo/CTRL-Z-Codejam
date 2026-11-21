@@ -129,25 +129,25 @@ export function OfferScreen({ offer, busy, onBuy, onNotNow, onPay }: Props) {
           {card.may_contain.length > 0 && <Tag>May contain: {card.may_contain.join(", ")}</Tag>}
         </div>
 
-        <div className="mt-5 flex items-end justify-between gap-3">
-          <div className="flex items-baseline gap-3">
-            <span key={card.price} className="ui-price-drop inline-block font-mono text-[52px] leading-none font-bold text-ink">
-              {formatPrice(card.price)}
-            </span>
-            <span className="font-mono text-h3 text-stone line-through">{formatPrice(card.food_price)}</span>
-          </div>
-          <span className={`flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 font-mono text-small font-bold ${lastMinute ? "bg-amber/20 text-ink" : "bg-[#F3F3F3] text-ink"}`}>
+        <div className="mt-5 flex items-baseline gap-3">
+          <span key={card.price} className="ui-price-drop inline-block font-mono text-[52px] leading-none font-bold text-ink">
+            {formatPrice(card.price)}
+          </span>
+          <span className="font-mono text-h3 text-stone line-through">{formatPrice(card.food_price)}</span>
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <span className={`flex items-center gap-1 rounded-full px-3 py-1.5 font-mono text-small font-bold text-ink ${lastMinute ? "bg-amber/20" : "bg-[#F3F3F3]"}`}>
             <Icon name="clock" className="h-4 w-4" />
             {formatClock(card.seconds_left)} left
           </span>
+          {!lost && watching !== null && watching > 0 && (
+            <span className="ui-fade-in flex items-center gap-2 text-small font-semibold text-ink">
+              <span className="buyer-dot h-2.5 w-2.5 rounded-full bg-amber" />
+              👀 {watching} {watching === 1 ? "person" : "people"} watching right now
+            </span>
+          )}
         </div>
-
-        {!lost && watching !== null && watching > 0 && (
-          <p className="mt-4 flex items-center gap-2 font-semibold text-ink">
-            <span className="buyer-dot h-2.5 w-2.5 rounded-full bg-amber" />
-            👀 {watching} {watching === 1 ? "person" : "people"} watching right now
-          </p>
-        )}
 
         {offer.step === "card" && (
           <p className="mt-3 flex items-start gap-2 rounded-card bg-mint px-3 py-2.5 font-semibold text-forest">
@@ -173,7 +173,7 @@ export function OfferScreen({ offer, busy, onBuy, onNotNow, onPay }: Props) {
           </p>
         )}
 
-        <div className="sticky bottom-0 mt-auto bg-gradient-to-t from-white from-75% to-transparent pt-6 pb-5">
+        <div className="sticky bottom-0 mt-auto bg-gradient-to-t from-white from-75% to-transparent pt-6 pb-5 pointer-events-none [&>*]:pointer-events-auto">
           {!lost && (
             <>
               <BottomButton onClick={onBuy} disabled={held || busy} arrow={false} className={held || busy ? "" : "buyer-pulse-btn"}>

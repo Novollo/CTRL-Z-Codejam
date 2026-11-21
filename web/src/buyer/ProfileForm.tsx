@@ -130,7 +130,7 @@ export function ProfileForm({ initial, onSubmit }: { initial: BuyerProfileInput;
         </div>
       )}
 
-      <div className="sticky bottom-0 mt-auto bg-gradient-to-t from-white from-70% to-transparent pt-8 pb-6">
+      <div className="sticky bottom-0 mt-auto bg-gradient-to-t from-white from-70% to-transparent pt-8 pb-6 pointer-events-none [&>*]:pointer-events-auto">
         <BottomButton onClick={submit} disabled={!ready || sending}>
           I'm in
         </BottomButton>

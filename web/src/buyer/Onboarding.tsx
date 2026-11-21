@@ -101,7 +101,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
       </div>
 
       <div className="px-6 pb-6">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex min-h-10 items-center justify-between">
           <div className="flex gap-2" role="tablist">
             {CARDS.map((_, k) => (
               <button
