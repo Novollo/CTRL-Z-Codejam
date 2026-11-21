@@ -35,9 +35,6 @@ export interface LiveState {
   fallback: Fallback;
 }
 
-/** Soft tick on price drops, at most this often. */
-const TICK_SOUND_GAP_MS = 3000;
-
 export function LiveScreen({
   live,
   range,
@@ -60,17 +57,6 @@ export function LiveScreen({
   const [confirmStop, setConfirmStop] = useState(false);
   const lastMinute = live.secondsLeft <= 60;
 
-  // Soft tick when the price drops (not on every tick).
-  const lastTick = useRef(0);
-  const lastPrice = useRef(live.price);
-  useEffect(() => {
-    if (live.price < lastPrice.current && Date.now() - lastTick.current > TICK_SOUND_GAP_MS) {
-      sound.tick();
-      lastTick.current = Date.now();
-    }
-    lastPrice.current = live.price;
-  }, [live.price]);
-
   const seen = live.stats?.seen ?? live.reached;
 
   return (
@@ -87,7 +73,7 @@ export function LiveScreen({
         </Ring>
 
         {live.stats ? (
-          <div className="grid w-full grid-cols-3 gap-2">
+          <div className="ui-flow-in ui-delay-1 grid w-full grid-cols-3 gap-2">
             <StatPill emoji="👀" value={live.stats.seen} before="Seen by " after="" />
             <StatPill emoji="🔥" value={live.stats.interested} before="" after={live.stats.interested === 1 ? " wants it" : " want it"} />
             <StatPill emoji="⚡" value={live.stats.watching} before="" after=" watching now" />
@@ -104,7 +90,7 @@ export function LiveScreen({
           </div>
         )}
 
-        <div className="w-full">
+        <div className="ui-flow-in ui-delay-2 w-full">
           <ZeeFeed live={live} restaurant={restaurant} food={food} />
         </div>
       </div>
@@ -116,7 +102,7 @@ export function LiveScreen({
             Lowest price {!editFloor && <span className="font-mono font-bold">{formatPrice(live.floor)}</span>}
           </span>
           {editFloor && <FloorStepper value={live.floor} range={range} onChange={onFloor} />}
-          <button onClick={() => setEditFloor((v) => !v)} className={`font-semibold ${editFloor ? "text-ink" : "text-forest"}`}>
+          <button onClick={() => { sound.tap(); setEditFloor((v) => !v); }} className={`ui-press rounded-full px-2 py-1 font-semibold ${editFloor ? "text-ink" : "text-forest"}`}>
             Edit
           </button>
         </div>
@@ -124,7 +110,7 @@ export function LiveScreen({
         <div className="flex min-h-12 items-center gap-3 border-t border-line text-body text-ink">
           <ClockIcon size={18} className="shrink-0 text-forest" />
           <span className="flex-1">If nobody buys: {FALLBACK_SHORT[live.fallback]}</span>
-          <button onClick={() => setChangeFallback((v) => !v)} className="font-semibold text-forest">
+          <button onClick={() => { sound.tap(); setChangeFallback((v) => !v); }} className="ui-press rounded-full px-2 py-1 font-semibold text-forest">
             Change
           </button>
         </div>
@@ -140,7 +126,7 @@ export function LiveScreen({
           </div>
         )}
 
-        <button onClick={() => setConfirmStop(true)} className="w-full pt-2 text-center text-body font-semibold text-stone underline">
+        <button onClick={() => { sound.tap(); setConfirmStop(true); }} className="ui-press mx-auto mt-2 block rounded-full px-4 py-1 text-center text-body font-semibold text-stone underline">
           Stop listing
         </button>
       </div>
@@ -150,10 +136,10 @@ export function LiveScreen({
           <div className="ui-pop-in w-full rounded-card bg-white p-5 text-center">
             <p className="text-h3 text-ink">Stop and keep your order?</p>
             <div className="mt-5 flex gap-3">
-              <button onClick={() => setConfirmStop(false)} className="h-12 flex-1 rounded-card border border-line text-body font-semibold text-ink">
+              <button onClick={() => { sound.tap(); setConfirmStop(false); }} className="ui-press h-12 flex-1 rounded-card border border-line text-body font-semibold text-ink">
                 No
               </button>
-              <button onClick={onStop} className="h-12 flex-1 rounded-card bg-ink text-body font-semibold text-white">
+              <button onClick={() => { sound.tap(); onStop(); }} className="ui-press h-12 flex-1 rounded-card bg-ink text-body font-semibold text-white">
                 Yes
               </button>
             </div>

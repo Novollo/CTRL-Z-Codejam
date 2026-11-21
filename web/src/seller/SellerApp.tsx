@@ -4,12 +4,11 @@ import type { OrderResponse, UndoResponse } from "@shared/api";
 import { TAG_LABELS, type Fallback } from "@shared/catalog";
 import type { LiveMessage } from "@shared/messages";
 import type { OrderStatus } from "@shared/types";
-import { Confetti, haptic, sound } from "../ui";
+import { Confetti, MuteButton, haptic, sound } from "../ui";
 import { AgentScreen } from "./AgentScreen";
 import { ConfirmSheet } from "./ConfirmSheet";
 import { NotSoldScreen, SoldScreen, type NotSoldKind } from "./EndScreens";
 import { LiveScreen, type LiveState } from "./LiveScreen";
-import { MuteButton } from "./MuteButton";
 import { OrderScreen } from "./OrderScreen";
 import { connectSeller, getOrder, patchListing, publishListing, stopListing, undoOrder } from "./sellerApi";
 import "./seller.css";
@@ -201,7 +200,7 @@ export function SellerApp() {
       {screen === "sold" && sold && order && <SoldScreen soldPrice={sold.price} orderTotal={order.order.total} pickupBy={sold.pickupBy} />}
       {screen === "notsold" && notSold && order && <NotSoldScreen kind={notSold.kind} restaurantName={order.restaurant.name} pickupCode={notSold.code} />}
       {screen === "live" && burst > 0 && <Confetti key={burst} pieces={70} durationMs={2000} />}
-      <MuteButton />
+      <MuteButton className="absolute top-3 left-3 z-40" />
     </div>
   );
 }

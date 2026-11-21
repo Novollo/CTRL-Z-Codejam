@@ -17,12 +17,9 @@ export function SoldScreen({ soldPrice, orderTotal, pickupBy }: { soldPrice: num
   const [counted, setCounted] = useState(false);
 
   useEffect(() => {
-    sound.cash();
+    sound.cash(); // once on sold (round 3)
     haptic.success();
-    const t = setTimeout(() => {
-      setCounted(true);
-      sound.success();
-    }, COUNT_MS + 100);
+    const t = setTimeout(() => setCounted(true), COUNT_MS + 100);
     return () => clearTimeout(t);
   }, []);
 
@@ -33,7 +30,7 @@ export function SoldScreen({ soldPrice, orderTotal, pickupBy }: { soldPrice: num
         <Mascot pose="jumping" motion="jump" sparkles size={200} />
       </div>
       <h1 className="ui-pop-in ui-delay-2 mt-6 text-[44px] leading-tight font-bold text-forest">Sold!</h1>
-      <p className="ui-slide-up ui-delay-3 mt-2 text-h2 text-ink">
+      <p className="ui-flow-in ui-delay-3 mt-2 text-h2 text-ink">
         You got <CountUp value={soldPrice} from={0} durationMs={COUNT_MS} format={formatPrice} className="font-mono text-[28px] font-bold text-forest" /> back.
       </p>
       <div className="mt-5 h-12">
@@ -63,13 +60,7 @@ export function NotSoldScreen({ kind, restaurantName, pickupCode }: { kind: NotS
   const look = LOOK[kind];
 
   useEffect(() => {
-    if (kind === "free_taken" || kind === "donated") {
-      sound.success();
-      haptic.success();
-    } else {
-      sound.tap();
-      haptic.light();
-    }
+    haptic.light(); // no sound: nothing was pressed (round 3)
   }, [kind]);
 
   return (
@@ -80,19 +71,19 @@ export function NotSoldScreen({ kind, restaurantName, pickupCode }: { kind: NotS
       </div>
       {kind === "pickup" && (
         <>
-          <p className="ui-slide-up ui-delay-2 mt-8 text-h2 text-ink">Nobody grabbed it. Your order is waiting at {restaurantName}.</p>
+          <p className="ui-flow-in ui-delay-2 mt-8 text-h2 text-ink">Nobody grabbed it. Your order is waiting at {restaurantName}.</p>
           <div className="ui-pop-in mt-6 rounded-card bg-mint px-6 py-4" style={{ animationDelay: "0.5s" }}>
             <span className="font-mono text-[36px] font-bold tracking-wide text-forest">{pickupCode}</span>
           </div>
         </>
       )}
       {kind === "free" && (
-        <p className="ui-slide-up ui-delay-2 mt-8 text-h2 text-ink">
+        <p className="ui-flow-in ui-delay-2 mt-8 text-h2 text-ink">
           Nobody bought it, so it's now free for someone nearby. You'll get a thank-you when it's taken.
         </p>
       )}
       {kind === "free_taken" && <p className="ui-pop-in ui-delay-2 mt-8 text-h1 text-forest">Someone nearby took it. Thank you!</p>}
-      {kind === "donated" && <p className="ui-slide-up ui-delay-2 mt-8 text-h2 text-ink">Thanks! Your meal is set aside for donation.</p>}
+      {kind === "donated" && <p className="ui-flow-in ui-delay-2 mt-8 text-h2 text-ink">Thanks! Your meal is set aside for donation.</p>}
     </div>
   );
 }
