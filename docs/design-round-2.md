@@ -21,6 +21,12 @@ Inspiration: Uber Eats Base (clean white screens, very big bold headings, black/
 - `ListingCard.items`: buyers see the items with descriptions.
 - New live message **`listing.stats`** `{ seen, watching, interested }`, sent to the seller and card holders on every tick. `DEMO_CROWD` (Worker setting, default "on") adds a simulated campus crowd on top of the real counts so the room never looks empty.
 
+## Restaurant logos (round 2b)
+The team's logos are in `web/public/img/logos/` (`fiveguys`, `dominos`, `timhortons`, `mcgillpizza`, `onigiri`.png, trimmed, max 512 px, white background). `Restaurant.logo_url` and `ListingCard.logo_url` point to them. The stage order stays Five Guys; Domino's, Tim Hortons, McGill Pizza and Onigiri Shop Pat replace the placeholder restaurants. Show logos on a white rounded tile (they have white backgrounds), `object-contain`, never stretched:
+- **Seller S1 header:** the Five Guys logo instead of the shop icon (big, centred on the mint header). S3 preview card: small logo next to the title.
+- **Buyer B3 card and B5 pass:** the restaurant logo next to the name.
+- **Buyer onboarding card 1 and B2:** a gently auto-scrolling row "Campus favourites" with all 5 logos from `GET /api/restaurants` (marquee style, pauses on touch).
+
 ## Seller app (track A)
 1. **S1:** show each item with its description under the name (smaller, stone colour), like a real receipt. Keep the greyed Cancel and the green Ctrl+Z button.
 2. **S2 agent screen: slower and more "real".** Zee cycles poses (`thinking` ↔ `sitting`) with `stir`. Lines appear one by one, about **1.6 s apart** (not 0.7 s), each with a small checkmark when done:

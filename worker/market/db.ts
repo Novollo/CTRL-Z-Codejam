@@ -26,6 +26,7 @@ export const toRestaurant = (r: Row): Restaurant => ({
   lat: r.lat as number,
   lng: r.lng as number,
   photo_url: r.photo_url as string,
+  logo_url: (r.logo_url as string) ?? "",
   default_category: r.default_category as Restaurant["default_category"],
   default_tags: json(r.default_tags, []),
   default_diet: json(r.default_diet, { vegetarian: "unsure", vegan: "unsure", halal: "unsure", gluten_free: "unsure" }),

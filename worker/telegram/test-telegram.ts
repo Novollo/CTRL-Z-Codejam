@@ -87,7 +87,7 @@ async function main() {
 
     console.log("\n== Ping message ==");
     const card: ListingCard = {
-      listing_id: "lst_demo", restaurant_name: "Five Guys", restaurant_address: "x", photo_url: "x",
+      listing_id: "lst_demo", restaurant_name: "Five Guys", restaurant_address: "x", photo_url: "x", logo_url: "x",
       title: "Fresh Five Guys combo, untouched", selling_line: "x", tags: ["burgers"], may_contain: [],
       food_price: 17.78, price: 11.6, seconds_left: 14 * 60 + 5, status: "live", lock_until: null, walk_min: 6, items: [],
     };

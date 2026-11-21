@@ -11,28 +11,30 @@ DELETE FROM orders;
 DELETE FROM walk_times;
 DELETE FROM restaurants;
 
--- 3 restaurants near McGill
-INSERT INTO restaurants (id, name, address, lat, lng, photo_url, default_category, default_tags, default_diet) VALUES
+-- 5 restaurants near McGill (round 2: the team's logos in web/public/img/logos)
+INSERT INTO restaurants (id, name, address, lat, lng, photo_url, logo_url, default_category, default_tags, default_diet) VALUES
   ('r_fiveguys', 'Five Guys', 'Placeholder address, downtown Montréal (TBD)', 45.5017, -73.5727,
-   '/img/restaurants/five-guys.jpg', 'burgers', '["burgers","fries"]',
+   '/img/restaurants/five-guys.jpg', '/img/logos/fiveguys.png', 'burgers', '["burgers","fries"]',
    '{"vegetarian":"no","vegan":"no","halal":"unsure","gluten_free":"no"}'),
-  ('r_pizza', 'Milton Slice (placeholder)', 'Placeholder address, Milton St (TBD)', 45.5075, -73.5760,
-   '/img/restaurants/pizza.jpg', 'pizza', '["pizza"]',
+  ('r_dominos', 'Domino''s', 'Near McGill campus (address TBD)', 45.5005, -73.5745, '/img/restaurants/dominos.jpg', '/img/logos/dominos.png', 'pizza', '["pizza"]',
    '{"vegetarian":"unsure","vegan":"no","halal":"unsure","gluten_free":"no"}'),
-  ('r_bowls', 'Green Bowl Co. (placeholder)', 'Placeholder address, Sherbrooke St W (TBD)', 45.5040, -73.5745,
-   '/img/restaurants/bowls.jpg', 'bowls', '["bowls"]',
+  ('r_timhortons', 'Tim Hortons', 'Near McGill campus (address TBD)', 45.5033, -73.5768, '/img/restaurants/timhortons.jpg', '/img/logos/timhortons.png', 'coffee_bakery', '["coffee_bakery","sandwiches"]',
+   '{"vegetarian":"unsure","vegan":"no","halal":"unsure","gluten_free":"no"}'),
+  ('r_mcgillpizza', 'McGill Pizza', 'Near McGill campus (address TBD)', 45.506, -73.5752, '/img/restaurants/mcgillpizza.jpg', '/img/logos/mcgillpizza.png', 'pizza', '["pizza"]',
+   '{"vegetarian":"unsure","vegan":"no","halal":"unsure","gluten_free":"no"}'),
+  ('r_onigiri', 'Onigiri Shop Pat', 'Near McGill campus (address TBD)', 45.5078, -73.572, '/img/restaurants/onigiri.jpg', '/img/logos/onigiri.png', 'asian', '["asian"]',
    '{"vegetarian":"unsure","vegan":"unsure","halal":"unsure","gluten_free":"unsure"}');
 
 -- Walk time in minutes: campus spot × restaurant (placeholder guesses)
 INSERT INTO walk_times (spot, restaurant_id, minutes) VALUES
-  ('trottier',  'r_fiveguys', 6),  ('trottier',  'r_pizza', 5),  ('trottier',  'r_bowls', 7),
-  ('mclennan',  'r_fiveguys', 8),  ('mclennan',  'r_pizza', 6),  ('mclennan',  'r_bowls', 4),
-  ('leacock',   'r_fiveguys', 7),  ('leacock',   'r_pizza', 5),  ('leacock',   'r_bowls', 5),
-  ('bronfman',  'r_fiveguys', 9),  ('bronfman',  'r_pizza', 8),  ('bronfman',  'r_bowls', 3),
-  ('burnside',  'r_fiveguys', 8),  ('burnside',  'r_pizza', 6),  ('burnside',  'r_bowls', 6),
-  ('ssmu',      'r_fiveguys', 10), ('ssmu',      'r_pizza', 4),  ('ssmu',      'r_bowls', 8),
-  ('redpath',   'r_fiveguys', 7),  ('redpath',   'r_pizza', 6),  ('redpath',   'r_bowls', 5),
-  ('mcconnell', 'r_fiveguys', 9),  ('mcconnell', 'r_pizza', 7),  ('mcconnell', 'r_bowls', 9);
+  ('trottier', 'r_fiveguys', 6), ('trottier', 'r_dominos', 8), ('trottier', 'r_timhortons', 5), ('trottier', 'r_mcgillpizza', 6), ('trottier', 'r_onigiri', 9),
+  ('mclennan', 'r_fiveguys', 8), ('mclennan', 'r_dominos', 7), ('mclennan', 'r_timhortons', 4), ('mclennan', 'r_mcgillpizza', 5), ('mclennan', 'r_onigiri', 8),
+  ('leacock', 'r_fiveguys', 7), ('leacock', 'r_dominos', 6), ('leacock', 'r_timhortons', 5), ('leacock', 'r_mcgillpizza', 4), ('leacock', 'r_onigiri', 8),
+  ('bronfman', 'r_fiveguys', 9), ('bronfman', 'r_dominos', 6), ('bronfman', 'r_timhortons', 6), ('bronfman', 'r_mcgillpizza', 7), ('bronfman', 'r_onigiri', 10),
+  ('burnside', 'r_fiveguys', 8), ('burnside', 'r_dominos', 7), ('burnside', 'r_timhortons', 5), ('burnside', 'r_mcgillpizza', 5), ('burnside', 'r_onigiri', 8),
+  ('ssmu', 'r_fiveguys', 10), ('ssmu', 'r_dominos', 9), ('ssmu', 'r_timhortons', 6), ('ssmu', 'r_mcgillpizza', 4), ('ssmu', 'r_onigiri', 6),
+  ('redpath', 'r_fiveguys', 7), ('redpath', 'r_dominos', 7), ('redpath', 'r_timhortons', 4), ('redpath', 'r_mcgillpizza', 5), ('redpath', 'r_onigiri', 9),
+  ('mcconnell', 'r_fiveguys', 9), ('mcconnell', 'r_dominos', 9), ('mcconnell', 'r_timhortons', 6), ('mcconnell', 'r_mcgillpizza', 7), ('mcconnell', 'r_onigiri', 10);
 
 -- The stage order (booklet 5 S1, 14.1): Five Guys pickup, #4821, in "Preparing".
 -- food_price 17.78 = 11.49 + 6.29. total 23.46 = 17.78 + 2.99 service + 2.69 tax.

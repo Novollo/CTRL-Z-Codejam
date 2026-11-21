@@ -716,6 +716,7 @@ export class Market extends DurableObject<Env> {
       restaurant_name: restaurant.name,
       restaurant_address: restaurant.address,
       photo_url: restaurant.photo_url,
+      logo_url: restaurant.logo_url,
       title: listing.title,
       selling_line: listing.selling_line,
       tags: listing.tags,
