@@ -33,7 +33,7 @@ function MiniTicker() {
 const CARDS: Card[] = [
   {
     bg: "bg-mint",
-    pose: "sitting",
+    pose: "waving",
     motion: "bounce",
     title: "Get fresh food for less, near campus.",
     text: "Regretted orders near McGill, at a falling price.",
@@ -41,7 +41,7 @@ const CARDS: Card[] = [
   },
   {
     bg: "bg-leaf",
-    pose: "thinking",
+    pose: "pointing",
     motion: "bob",
     title: "Watch the price drop.",
     text: "Set your max price. We ping you when it's under.",
@@ -88,7 +88,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
                 <div className="absolute top-4 left-5 rounded-lg bg-white/90 px-2 py-1">
                   <Logo />
                 </div>
-                <div className="flex h-52 w-52 items-center justify-center rounded-full bg-white/70">
+                <div className="flex h-52 w-52 items-center justify-center rounded-full bg-white shadow-sm">
                   <Mascot pose={c.pose} motion={c.motion} size={170} />
                 </div>
                 {c.extra}
