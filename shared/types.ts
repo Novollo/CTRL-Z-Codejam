@@ -13,6 +13,7 @@ export interface Restaurant {
   lat: number;
   lng: number;
   photo_url: string;
+  logo_url: string;                 // round 2: /img/logos/<name>.png (web/public)
   default_category: FoodType;       // used for `active_nearby_liking_category` (8.2)
   default_tags: Tag[];              // JSON. Agent fallback (8.6)
   default_diet: ListingDiet;        // JSON. Agent fallback (8.6)
@@ -125,6 +126,7 @@ export interface ListingCard {
   restaurant_name: string;
   restaurant_address: string;
   photo_url: string;
+  logo_url: string;         // restaurant logo (round 2)
   title: string;
   selling_line: string;
   tags: Tag[];

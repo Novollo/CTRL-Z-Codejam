@@ -37,7 +37,8 @@ export const API = {
   order: (orderId: string) => `/api/orders/${orderId}`,               // GET  (S1 order tracker)
   adminState: () => `/api/admin/state`,                               // GET  (/admin: agent mode + buyers)
   adminAgentMode: () => `/api/admin/agent-mode`,                      // POST (/admin: switch AGENT_MODE)
-  health: () => `/api/health`,                                        // GET  (is the Worker + DB up?)
+  health: () => `/api/health`,
+  restaurants: () => `/api/restaurants`,                              // GET  (round 2: logos for the buyer side)                                        // GET  (is the Worker + DB up?)
   // Live connection
   wsSeller: (orderId: string) => `/ws?role=seller&order=${encodeURIComponent(orderId)}`,
   wsBuyer: (buyerId: string) => `/ws?role=buyer&id=${encodeURIComponent(buyerId)}`,
@@ -171,6 +172,11 @@ export interface AdminStateResponse {
 /** POST /api/admin/agent-mode */
 export interface AgentModeRequest {
   agent_mode: AgentMode;
+}
+
+/** GET /api/restaurants → every restaurant (round 2: "campus favourites" logo row on the buyer side). */
+export interface RestaurantsResponse {
+  restaurants: Restaurant[];
 }
 
 /** GET /api/health */
