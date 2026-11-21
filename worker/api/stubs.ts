@@ -69,7 +69,7 @@ api.get("/buyers/:id", (c) => c.json<BuyerProfile>(MOCK_BUYER));
 api.patch("/buyers/:id", (c) => c.json(ok));
 
 api.get("/listings/:id", (c) =>
-  c.json<ListingCardResponse>({ listing: mockListingCard(11.6, 14 * 60 + 5), reason: MOCK_REASON }),
+  c.json<ListingCardResponse>({ listing: mockListingCard(11.6, 14 * 60 + 5), reason: MOCK_REASON, buyer_id: MOCK_BUYER_ID }),
 );
 
 // The stub always wins the lock. "Checkout" goes straight to the paid page (no real Stripe yet).

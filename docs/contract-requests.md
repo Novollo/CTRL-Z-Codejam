@@ -5,7 +5,13 @@ Format: `- [ ] [track X] what you need · why · date`.
 
 ## Open requests
 
-- [ ] [track B] Add `buyer_id: string` to `ListingCardResponse` (GET `/api/listings/:id` with the token header) · why: `/buy/:listingId?t=` (Telegram "Buy now") only has the token, but `connectLive` needs the buyer id, so a Telegram-only buyer gets no live ticks / B-hold / B-lost. Today track B falls back to re-reading GET `/api/listings/:id` every 2 s on that page (needs the real API to return `status: "locked"` + `lock_until` while locked; after a sale the card just stays until the buyer taps). With `buyer_id`, BuyPage would save id + token and use `/ws` like `/join`. · Nov 21
+_(none open)_
+
+## Answered requests
+
+- [x] [track B] `buyer_id` on `GET /api/listings/:id` · **Approved** (Nov 21): `ListingCardResponse.buyer_id` added; the stub returns `b_demo`. Track B: switch `/buy/:id` to `/ws` like `/join`. Track C: return the token's buyer id.
+- [x] [track A] No "not sold" ending in the mock run · **OK as built** (Nov 21): keep the `?end=` switch inside `web/src/seller`; the shared mock stays as it is.
+- [x] [track A] Thank-you text when the free meal is taken · **Use "Someone nearby took it. Thank you!"** for now (Nov 21). The team may change the words later.
 
 ---
 
