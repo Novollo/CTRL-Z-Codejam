@@ -466,7 +466,7 @@ The look is **clean delivery-app layout + eco green + one friendly bear chef**. 
 - Icons: simple line icons (Lucide), 2 px stroke, in `forest` or `ink`.
 - Logo: two keyboard keycaps, "Ctrl" and "Z", in `forest` outline, followed by "Eats" in Inter bold.
 
-### 11.4 Mascot: the bear chef
+### 11.4 Mascot: the bear chef *(replaced in round 2: Zee is now the team's red bird, see docs/design-round-2.md)*
 
 A round bear in green outline, with a chef hat and an apron that shows the undo arrow. The name suggestion is **Zee** (from Ctrl+Z). The team has four poses:
 

@@ -38,10 +38,17 @@ export const SHAPE = {
 /** Seller phone frame size (booklet 5). */
 export const PHONE = { width: 390, height: 844 } as const;
 
-/** Mascot poses (booklet 11.4). File names are for /web/public/mascot/. */
+/**
+ * Mascot poses (round 2: Zee is now the team's red bird; files in /web/public/mascot/).
+ * The first four keys are the booklet's poses, kept so existing screens still work.
+ */
 export const MASCOT_POSES = {
-  sitting: "/mascot/sitting.png",   // B2, S4, empty states
-  bag: "/mascot/bag.png",           // B5, Telegram welcome
-  thinking: "/mascot/thinking.png", // S2
-  jumping: "/mascot/jumping.png",   // S5a
+  sitting: "/mascot/standing.webp",   // calm, standing: B2, S4, empty states
+  bag: "/mascot/bag.webp",            // running with the food bag: B5, Telegram welcome
+  thinking: "/mascot/thinking.webp",  // hand on chin + "?": S2 agent at work
+  jumping: "/mascot/jumping.webp",    // jumping with sparkles: S5a sold, B5 paid
+  waving: "/mascot/waving.webp",      // hello: onboarding, B1
+  pointing: "/mascot/pointing.webp",  // "look at this": S4 feed, B3 offer
+  thumbsup: "/mascot/thumbsup.webp",  // "done!": S2 "Your listing is ready!", success lines
+  proud: "/mascot/proud.webp",        // arms crossed + sparkles: S3, "I'm on it"
 } as const;

@@ -21,6 +21,11 @@ Inspiration: Uber Eats Base (clean white screens, very big bold headings, black/
 - `ListingCard.items`: buyers see the items with descriptions.
 - New live message **`listing.stats`** `{ seen, watching, interested }`, sent to the seller and card holders on every tick. `DEMO_CROWD` (Worker setting, default "on") adds a simulated campus crowd on top of the real counts so the room never looks empty.
 
+## Mascot: Zee is now the red bird (round 2c)
+The team replaced the bear chef with a red bird in a tartan kilt. Same name: **Zee**. Eight poses in `web/public/mascot/*.webp` (transparent background), all in `MASCOT_POSES`:
+`sitting` (standing calm), `bag` (running with the food bag), `thinking` (hand on chin + "?"), `jumping` (sparkles), `waving`, `pointing`, `thumbsup`, `proud` (arms crossed + sparkles).
+Suggested use: onboarding card 1 + B1 → `waving`; S2 → cycle `thinking` → `pointing`, then `thumbsup` on "Your listing is ready!"; S3 → `proud`; S4 feed → cycle `sitting` / `pointing` / `thumbsup`; B3 → `pointing`; B5 → `bag` then `jumping`; S5a → `jumping`; B2 → `sitting` with `breathe`. The bird is red: put it on white or mint, never on red. Keep the app's green brand colours.
+
 ## Restaurant logos (round 2b)
 The team's logos are in `web/public/img/logos/` (`fiveguys`, `dominos`, `timhortons`, `mcgillpizza`, `onigiri`.png, trimmed, max 512 px, white background). `Restaurant.logo_url` and `ListingCard.logo_url` point to them. The stage order stays Five Guys; Domino's, Tim Hortons, McGill Pizza and Onigiri Shop Pat replace the placeholder restaurants. Show logos on a white rounded tile (they have white backgrounds), `object-contain`, never stretched:
 - **Seller S1 header:** the Five Guys logo instead of the shop icon (big, centred on the mint header). S3 preview card: small logo next to the title.

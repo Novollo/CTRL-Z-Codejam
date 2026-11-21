@@ -1,10 +1,10 @@
-// Zee the bear chef (booklet 11.4), animated (round 2). Owned by the lead; tracks A and B use this one.
+// Zee, the team's red bird mascot (round 2, replaces the booklet's bear chef), animated. Owned by the lead; tracks A and B use this one.
 //
 //   <Mascot pose="thinking" motion="stir" size={160} />
 //   <Mascot cycle={["thinking", "sitting", "bag"]} cycleMs={1400} motion="bob" />   // loading screens
 //   <Mascot pose="jumping" motion="jump" sparkles />                                  // celebrations
 //
-// Shows /mascot/<pose>.png. If the file is missing, a line-drawn bear of the same size stands in.
+// Shows /mascot/<pose>.webp. If the file is missing, a simple line drawing of the same size stands in.
 import { useEffect, useState } from "react";
 import { MASCOT_POSES } from "@shared/tokens";
 
@@ -47,7 +47,7 @@ function PoseImage({ pose, size }: { pose: Pose; size: number }) {
   return (
     <img
       src={MASCOT_POSES[pose]}
-      alt="Zee the bear chef"
+      alt="Zee"
       width={size}
       height={size}
       draggable={false}
