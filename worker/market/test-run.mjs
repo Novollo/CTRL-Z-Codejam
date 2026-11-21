@@ -217,6 +217,8 @@ async function statsChecks(id, seller, alice) {
     const last = seller.msgs.filter(of("listing.stats", id)).at(-1);
     log(`  stats (real + crowd): seen ${last.seen} · watching ${last.watching} · interested ${last.interested}`);
     check(last.seen > 2, "crowd on: seen grows above the 2 real pings");
+    const first = seller.msgs.find(of("listing.stats", id));
+    check(first.seen >= 16 && first.interested >= 10, `crowd on: busy from the first stats (seen ${first.seen}, interested ${first.interested}; 45% of 36 / 22)`);
   }
   const stats = seller.msgs.filter(of("listing.stats", id));
   log(`  seller got ${stats.length} stats so far (seen: ${stats.map((m) => m.seen).join(",")})`);
