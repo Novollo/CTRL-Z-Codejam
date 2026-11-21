@@ -59,6 +59,8 @@ export type AgentMode = "live" | "default";
 export const LOST_CARD_CLOSE_SEC = 3;
 /** Pickup code prefix: "ZEE-4821". */
 export const PICKUP_CODE_PREFIX = "ZEE-";
+/** The Telegram bot (booklet 7). Link in B2: "Or get them on Telegram →". */
+export const TELEGRAM_BOT_URL = "https://t.me/ZEats_bot";
 /** Stripe test card for the stage (B4). */
 export const STRIPE_TEST_CARD = "4242 4242 4242 4242";
 
