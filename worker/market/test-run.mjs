@@ -90,6 +90,11 @@ async function main() {
   const health = await call("GET", "/api/health");
   check(health.status === 200 && health.data?.mode === "real", `health: ${JSON.stringify(health.data)}`);
 
+  const rest = await call("GET", "/api/restaurants");
+  const list = rest.data?.restaurants ?? [];
+  check(rest.status === 200 && list[0]?.id === "r_fiveguys" && list.length >= 2 && list.every((r) => r.name && r.logo_url),
+    `GET restaurants: ${list.map((r) => r.name).join(", ")} (Five Guys first, all with logo_url)`);
+
   const state = await call("GET", "/api/admin/state");
   const speed = state.data?.demo_speed ?? 7;
   log(`DEMO_SPEED ${speed}, AGENT_MODE ${state.data?.agent_mode}`);
