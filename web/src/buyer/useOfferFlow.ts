@@ -1,6 +1,6 @@
 // The offer card's life (booklet 6, B3 → B4 → B5, plus B-hold and B-lost), driven by live messages.
 // Used by /join and /buy/:listingId.
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { API, type BuyResponse, type BuyTakenResponse, type PassResponse } from "@shared/api";
 import { LOCK_SEC, LOST_CARD_CLOSE_SEC } from "@shared/constants";
 import type { LiveMessage } from "@shared/messages";
@@ -68,15 +68,19 @@ export function useOfferFlow(token: string | null) {
   const [offer, setOffer] = useState<Offer | null>(null);
   const [busy, setBusy] = useState(false);
 
+  const pinged = useRef<string | null>(null); // listing id of the last real ping (B3 opened by an offer)
+  const quiet = useRef(false); // B5 loaded on a page load (back from Stripe): no sound
   const onLive = useCallback((msg: LiveMessage) => {
+    if (msg.type === "ping") pinged.current = msg.listing.listing_id;
     setOffer((o) => applyLive(o, msg));
   }, []);
 
-  // Sound + vibration for each moment (design round 2). A new card (B3) gets the ping.
+  // Sound + vibration only for real moments (round 3): ping when an offer opens, lock, lost once, success once when paid.
   const cue = offer === null ? null : offer.step === "card" ? `card:${offer.card.listing_id}` : offer.step;
   useEffect(() => {
     if (cue === null) return;
     if (cue.startsWith("card:")) {
+      if (cue !== `card:${pinged.current}`) return; // opened from a link or a reload: silent
       sound.ping();
       haptic.ping();
     } else if (cue === "locked") {
@@ -86,6 +90,7 @@ export function useOfferFlow(token: string | null) {
       sound.lost();
       haptic.medium();
     } else if (cue === "pass") {
+      if (quiet.current) return;
       sound.success();
       haptic.success();
     }
@@ -149,6 +154,7 @@ export function useOfferFlow(token: string | null) {
       if (!token) return;
       try {
         const pass = await apiCall<PassResponse>("GET", API.pass(listingId), undefined, token);
+        quiet.current = true;
         setOffer({ step: "pass", pass, free: false });
       } catch {
         // not the winner (or not paid yet): stay on B2
