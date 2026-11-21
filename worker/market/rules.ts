@@ -43,9 +43,10 @@ export function priceAt(listing: Listing, now: number, speed: number): number {
 
 // ---- Social proof (round 2): the simulated campus crowd added on top of the real counts ----
 
-/** The crowd for this listing now: grows from 0 at publish to the max at the floor time; watching wobbles. */
+/** The crowd for this listing now: grows from start_share of the max at publish to the max at the floor time; watching wobbles. */
 export function demoCrowd(listing: Listing, now: number, speed: number): { seen: number; watching: number; interested: number } {
-  const share = floorShare(listing, now, speed);
+  // Starts at start_share of the max at publish (a busy market from the first second), the max at floor time.
+  const share = DEMO_CROWD.start_share + (1 - DEMO_CROWD.start_share) * floorShare(listing, now, speed);
   const seen = Math.round(DEMO_CROWD.seen_max * share);
   const interested = Math.round(DEMO_CROWD.interested_max * share);
   const storySec = ((now - (listing.opens_at ?? now)) * speed) / 1000;

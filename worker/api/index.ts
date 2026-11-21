@@ -1,7 +1,9 @@
 // Track C: the real HTTP API (booklet 10.4 + lead additions in shared/api.ts). Mounted at /api by worker/index.ts.
 import { Hono } from "hono";
-import type { HealthResponse } from "@shared/api";
+import type { HealthResponse, RestaurantsResponse } from "@shared/api";
+import { DEMO_RESTAURANT_ID } from "@shared/constants";
 import type { Env } from "../env";
+import { toRestaurant } from "../market/db";
 import { admin } from "./admin";
 import { buyer } from "./buyer";
 import { seller } from "./seller";
@@ -19,6 +21,15 @@ api.get("/health", async (c) => {
     // database not set up yet
   }
   return c.json<HealthResponse>({ ok: true, restaurants, mode: "real" });
+});
+
+// GET /api/restaurants: every restaurant, the stage one (Five Guys) first, for the buyer-side logo row.
+api.get("/restaurants", async (c) => {
+  const { results } = await c.env.DB
+    .prepare("SELECT * FROM restaurants ORDER BY id != ?, rowid")
+    .bind(DEMO_RESTAURANT_ID)
+    .all<Record<string, unknown>>();
+  return c.json<RestaurantsResponse>({ restaurants: results.map(toRestaurant) });
 });
 
 api.route("/", seller);
