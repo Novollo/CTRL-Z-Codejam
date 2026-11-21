@@ -50,4 +50,4 @@ These fill gaps in the booklet. Any track may question them here.
 - [ ] **Where does AGENT_MODE live at runtime?** It is a Worker setting, which can't change without a redeploy. Suggestion: track C stores the /admin switch in the Market Durable Object, with `AGENT_MODE` as the starting value.
 - [ ] **"A buyer picks it up at 14:32" (S5a)** vs **"Pick up by 14:52" (B5)**: is the seller's time the pickup deadline or something else? The contract sends `pickup_by` only.
 - [ ] **B-lost example says $8.40, S5a says $9.40.** The mock run sells at $9.40 (40% of $23.46).
-- [ ] **Telegram bot name:** is `@CtrlZEatsBot` free?
+- [x] **Telegram bot name:** the bot is `@ZEats_bot` (`TELEGRAM_BOT_URL` in `shared/constants.ts`).
