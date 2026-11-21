@@ -6,10 +6,11 @@ import { LOCK_SEC, LOST_CARD_CLOSE_SEC } from "@shared/constants";
 import type { LiveMessage } from "@shared/messages";
 import type { ListingCard, PickupPass } from "@shared/types";
 import { ApiCallError, apiCall } from "../lib/api";
+import { haptic, sound } from "../ui";
 
 export type Offer =
-  /** B3, or B-hold when holdUntil is set (someone else is paying). */
-  | { step: "card"; card: ListingCard; reason: string; holdUntil: number | null }
+  /** B3, or B-hold when holdUntil is set (someone else is paying). `watching` from listing.stats. */
+  | { step: "card"; card: ListingCard; reason: string; holdUntil: number | null; watching: number | null }
   /** B4: this buyer won the lock. */
   | { step: "locked"; card: ListingCard; price: number; lockUntil: number; checkoutUrl: string; timedOut: boolean }
   /** B-lost: someone else got it. */
@@ -17,11 +18,12 @@ export type Offer =
   /** B5: pickup pass. `free` when taken in the free window (no payment). */
   | { step: "pass"; pass: PickupPass; free: boolean };
 
-export const openCard = (card: ListingCard, reason: string): Offer => ({
+export const openCard = (card: ListingCard, reason: string): Extract<Offer, { step: "card" }> => ({
   step: "card",
   card,
   reason,
   holdUntil: card.status === "locked" ? card.lock_until : null,
+  watching: null,
 });
 
 /** Pure: the next offer state after one live message. */
@@ -29,6 +31,7 @@ export function applyLive(offer: Offer | null, msg: LiveMessage): Offer | null {
   if (msg.type === "listing.sold" && msg.pass) return { step: "pass", pass: msg.pass, free: msg.sold_price === 0 };
 
   if (msg.type === "ping") {
+    if (offer?.step === "card" && offer.card.listing_id === msg.listing.listing_id) return { ...openCard(msg.listing, msg.reason), watching: offer.watching };
     if (offer === null || offer.step === "card" || offer.step === "lost") return openCard(msg.listing, msg.reason);
     return offer; // busy paying or already has a pass
   }
@@ -41,6 +44,8 @@ export function applyLive(offer: Offer | null, msg: LiveMessage): Offer | null {
     switch (msg.type) {
       case "listing.tick":
         return { ...offer, card: { ...card, price: msg.price, seconds_left: msg.seconds_left } };
+      case "listing.stats":
+        return { ...offer, watching: msg.watching };
       case "listing.locked":
         return { ...offer, card: { ...card, status: "locked", lock_until: msg.lock_until }, holdUntil: msg.lock_until };
       case "listing.unlocked":
@@ -64,9 +69,27 @@ export function useOfferFlow(token: string | null) {
   const [busy, setBusy] = useState(false);
 
   const onLive = useCallback((msg: LiveMessage) => {
-    if (msg.type === "ping") navigator.vibrate?.(200); // short vibration where the phone allows it
     setOffer((o) => applyLive(o, msg));
   }, []);
+
+  // Sound + vibration for each moment (design round 2). A new card (B3) gets the ping.
+  const cue = offer === null ? null : offer.step === "card" ? `card:${offer.card.listing_id}` : offer.step;
+  useEffect(() => {
+    if (cue === null) return;
+    if (cue.startsWith("card:")) {
+      sound.ping();
+      haptic.ping();
+    } else if (cue === "locked") {
+      sound.lock();
+      haptic.medium();
+    } else if (cue === "lost") {
+      sound.lost();
+      haptic.medium();
+    } else if (cue === "pass") {
+      sound.success();
+      haptic.success();
+    }
+  }, [cue]);
 
   // B4: the lock runs out → "Time ran out. It's back on the market."
   const lockUntil = offer?.step === "locked" && !offer.timedOut ? offer.lockUntil : null;

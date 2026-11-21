@@ -1,6 +1,7 @@
-// Small UI pieces for the buyer pages (booklet 11). Inline line icons, 2 px stroke.
+// Small UI pieces for the buyer pages (booklet 11, design round 2). Inline line icons, 2 px stroke.
+// Zee, sound, haptics and confetti come from the shared kit in web/src/ui.
 import { useEffect, useState, type ReactNode } from "react";
-import { MASCOT_POSES } from "@shared/tokens";
+import { haptic, sound } from "../ui";
 import "./buyer.css";
 
 /** Current time, refreshed every `ms` while `on` is true. For real-time countdowns (lock, hold). */
@@ -15,12 +16,23 @@ export function useNow(on: boolean, ms = 250): number {
   return now;
 }
 
+/** Browsers allow sound only after a first tap: unlock it on the first touch anywhere. */
+export function useSoundUnlock(): void {
+  useEffect(() => {
+    const unlock = () => sound.unlock();
+    window.addEventListener("pointerdown", unlock, { once: true });
+    return () => window.removeEventListener("pointerdown", unlock);
+  }, []);
+}
+
 /** "14:52" */
 export const formatTime = (ms: number): string =>
   new Date(ms).toLocaleTimeString("en-CA", { hour: "2-digit", minute: "2-digit", hour12: false });
 
-export function Icon({ name, className = "h-5 w-5" }: { name: "pin" | "walk" | "clock" | "check" | "bag" | "undo"; className?: string }) {
-  const paths: Record<typeof name, ReactNode> = {
+type IconName = "pin" | "walk" | "clock" | "check" | "bag" | "arrow" | "sound" | "mute" | "edit" | "spark" | "tag";
+
+export function Icon({ name, className = "h-5 w-5" }: { name: IconName; className?: string }) {
+  const paths: Record<IconName, ReactNode> = {
     pin: (
       <>
         <path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z" />
@@ -46,10 +58,25 @@ export function Icon({ name, className = "h-5 w-5" }: { name: "pin" | "walk" | "
         <path d="M9 8V6a3 3 0 0 1 6 0v2" />
       </>
     ),
-    undo: (
+    arrow: <path d="M5 12h14m-6-6 6 6-6 6" />,
+    sound: (
       <>
-        <path d="M9 14 4 9l5-5" />
-        <path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" />
+        <path d="M4 9v6h4l5 4V5L8 9H4Z" />
+        <path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11" />
+      </>
+    ),
+    mute: (
+      <>
+        <path d="M4 9v6h4l5 4V5L8 9H4Z" />
+        <path d="m17 9 5 6m0-6-5 6" />
+      </>
+    ),
+    edit: <path d="M4 20h4L19 9l-4-4L4 16v4ZM13.5 6.5l4 4" />,
+    spark: <path d="M12 3v4m0 10v4M3 12h4m10 0h4M6 6l2.5 2.5m7 7L18 18M6 18l2.5-2.5m7-7L18 6" />,
+    tag: (
+      <>
+        <path d="M3 12V4h8l10 10-8 8L3 12Z" />
+        <circle cx="7.5" cy="8.5" r="1.5" />
       </>
     ),
   };
@@ -73,28 +100,23 @@ export function Logo() {
   );
 }
 
-/** Mascot image. If the file is not there yet, a same-size placeholder bear. */
-export function Mascot({ pose, size = 120, className = "" }: { pose: keyof typeof MASCOT_POSES; size?: number; className?: string }) {
-  const [missing, setMissing] = useState(false);
-  if (!missing) {
-    return (
-      <img src={MASCOT_POSES[pose]} alt="Zee" width={size} height={size} className={`object-contain ${className}`} onError={() => setMissing(true)} />
-    );
-  }
+/** Small speaker button in a corner: mutes every sound cue (saved per browser). */
+export function MuteButton() {
+  const [muted, setMuted] = useState(sound.isMuted);
+  const flip = () => {
+    sound.setMuted(!muted);
+    setMuted(!muted);
+    if (muted) sound.tap(); // just unmuted: a little confirmation
+  };
   return (
-    <svg viewBox="0 0 100 100" width={size} height={size} className={className} role="img" aria-label="Zee">
-      <g fill="#fff" stroke="var(--color-forest)" strokeWidth={3} strokeLinejoin="round">
-        <path d="M30 30c-6-10 4-22 14-14 4-6 8-6 12 0 10-8 20 4 14 14Z" />
-        <circle cx="30" cy="38" r="8" />
-        <circle cx="70" cy="38" r="8" />
-        <circle cx="50" cy="58" r="26" />
-        <ellipse cx="50" cy="66" rx="10" ry="7" />
-      </g>
-      <circle cx="41" cy="54" r="3" fill="var(--color-forest)" />
-      <circle cx="59" cy="54" r="3" fill="var(--color-forest)" />
-      <circle cx="50" cy="63" r="3" fill="var(--color-forest)" />
-      <path d="M45 70q5 4 10 0" fill="none" stroke="var(--color-forest)" strokeWidth={2.5} strokeLinecap="round" />
-    </svg>
+    <button
+      type="button"
+      onClick={flip}
+      aria-label={muted ? "Sound off" : "Sound on"}
+      className="fixed top-3 right-3 z-[60] flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white/90 text-ink shadow-sm backdrop-blur"
+    >
+      <Icon name={muted ? "mute" : "sound"} className="h-5 w-5" />
+    </button>
   );
 }
 
@@ -111,15 +133,22 @@ export function FoodPhoto({ src, alt, className = "" }: { src: string; alt: stri
   return <img src={src} alt={alt} className={`rounded-card object-cover ${className}`} onError={() => setMissing(true)} />;
 }
 
-/** Pill chip. Selected = mint background + forest border. */
+/** Pill chip. Pops when selected (mint + forest), with a soft tap. */
 export function Chip({ on, onClick, children }: { on: boolean; onClick?: () => void; children: ReactNode }) {
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={() => {
+        sound.tap();
+        haptic.light();
+        onClick?.();
+      }}
       aria-pressed={on}
-      className={`rounded-full border px-4 py-2 text-small font-medium ${on ? "border-forest bg-mint text-forest" : "border-line bg-white text-ink"}`}
+      className={`flex items-center gap-1.5 rounded-full border-2 px-4 py-2.5 text-small font-semibold transition-colors ${
+        on ? "ui-pop-in border-forest bg-mint text-forest" : "border-line bg-white text-ink active:scale-95"
+      }`}
     >
+      {on && <Icon name="check" className="h-4 w-4" />}
       {children}
     </button>
   );
@@ -127,37 +156,56 @@ export function Chip({ on, onClick, children }: { on: boolean; onClick?: () => v
 
 /** Static chip for listing tags. */
 export function Tag({ children }: { children: ReactNode }) {
-  return <span className="rounded-full border border-line bg-white px-3 py-1 text-small text-ink">{children}</span>;
+  return <span className="rounded-full bg-[#F3F3F3] px-3 py-1.5 text-small font-medium text-ink">{children}</span>;
 }
 
-/** Big on/off toggle with its label. */
+/** Big round on/off toggle with its label. Springy knob, tap sound, vibration. */
 export function Toggle({ on, onChange, label }: { on: boolean; onChange: (on: boolean) => void; label: string }) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={on}
-      onClick={() => onChange(!on)}
-      className="flex w-full items-center justify-between gap-4 rounded-card border border-line p-4 text-left"
+      onClick={() => {
+        sound.tap();
+        haptic.medium();
+        onChange(!on);
+      }}
+      className={`buyer-toggle flex w-full items-center justify-between gap-4 rounded-card border-2 p-4 text-left transition-colors ${
+        on ? "border-forest bg-mint" : "border-line bg-white"
+      }`}
     >
       <span className="text-h3 text-ink">{label}</span>
-      <span className={`relative h-8 w-14 shrink-0 rounded-full transition-colors ${on ? "bg-forest" : "bg-line"}`}>
-        <span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-all ${on ? "left-7" : "left-1"}`} />
+      <span className={`relative h-9 w-16 shrink-0 rounded-full transition-colors duration-300 ${on ? "bg-forest" : "bg-line"}`}>
+        <span className={`buyer-knob absolute top-1 h-7 w-7 rounded-full bg-white shadow-md ${on ? "left-8" : "left-1"}`} />
       </span>
     </button>
   );
 }
 
-/** The one full-width button stuck to the bottom of the screen (56 px, booklet 11.3). */
-export function BottomButton({ children, onClick, disabled }: { children: ReactNode; onClick?: () => void; disabled?: boolean }) {
+/** The one full-width button stuck to the bottom (56 px, with → arrow, design round 2). */
+export function BottomButton({
+  children,
+  onClick,
+  disabled,
+  arrow = true,
+  className = "",
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  arrow?: boolean;
+  className?: string;
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="h-bottom w-full rounded-card bg-forest text-h3 font-bold text-white disabled:bg-line disabled:text-stone"
+      className={`flex h-bottom w-full items-center justify-center gap-2 rounded-card bg-forest text-h3 font-bold text-white transition-transform active:scale-[.98] disabled:bg-line disabled:text-stone ${className}`}
     >
       {children}
+      {arrow && <Icon name="arrow" className="h-5 w-5" />}
     </button>
   );
 }

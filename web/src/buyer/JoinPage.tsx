@@ -5,9 +5,11 @@ import { MOCK_BUYER, MOCK_BUYER_ID, MOCK_BUYER_TOKEN } from "@shared/mocks/data"
 import { ApiCallError, apiCall } from "../lib/api";
 import { connectLive } from "../lib/live";
 import { OfferScreen } from "./OfferScreen";
+import { Onboarding } from "./Onboarding";
 import { PassScreen } from "./PassScreen";
 import { EMPTY_PROFILE, ProfileForm } from "./ProfileForm";
 import { clearBuyer, isLocalMock, loadBuyer, loadToken, saveBuyer, type SavedBuyer } from "./storage";
+import { MuteButton, useSoundUnlock } from "./ui";
 import { useOfferFlow } from "./useOfferFlow";
 import { WaitingScreen, spotLabel } from "./WaitingScreen";
 
@@ -21,13 +23,14 @@ const toInput = (b: BuyerProfile): BuyerProfileInput => ({
   max_price: b.max_price,
 });
 
-type View = { kind: "loading" } | { kind: "form"; initial: BuyerProfileInput } | { kind: "waiting" };
+type View = { kind: "loading" } | { kind: "intro" } | { kind: "form"; initial: BuyerProfileInput } | { kind: "waiting" };
 
 export function JoinPage() {
   const [saved, setSaved] = useState<SavedBuyer | null>(loadBuyer);
   const [profile, setProfile] = useState<BuyerProfileInput | null>(null);
-  const [view, setView] = useState<View>(saved ? { kind: "loading" } : { kind: "form", initial: EMPTY_PROFILE });
+  const [view, setView] = useState<View>(saved ? { kind: "loading" } : { kind: "intro" });
   const [error, setError] = useState(false);
+  useSoundUnlock();
   const flow = useOfferFlow(saved?.token ?? loadToken()); // token alone: came from a Telegram link (/buy)
   const { onLive, loadPass } = flow;
 
@@ -48,6 +51,8 @@ export function JoinPage() {
         if (e instanceof ApiCallError && [401, 403, 404].includes(e.status)) {
           clearBuyer(); // unknown buyer: start again
           setSaved(null);
+          setView({ kind: "intro" });
+          return;
         }
         setView({ kind: "form", initial: EMPTY_PROFILE });
       });
@@ -105,6 +110,8 @@ export function JoinPage() {
 
   return (
     <>
+      <MuteButton />
+      {view.kind === "intro" && <Onboarding onDone={() => setView({ kind: "form", initial: EMPTY_PROFILE })} />}
       {view.kind === "form" && (
         <>
           <ProfileForm initial={view.initial} onSubmit={submit} />

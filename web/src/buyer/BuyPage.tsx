@@ -7,11 +7,13 @@ import { apiCall } from "../lib/api";
 import { OfferScreen } from "./OfferScreen";
 import { PassScreen } from "./PassScreen";
 import { loadBuyer, saveBuyer } from "./storage";
-import { Logo, Mascot } from "./ui";
+import { Mascot } from "../ui";
+import { Logo, MuteButton, useSoundUnlock } from "./ui";
 import { openCard, useOfferFlow } from "./useOfferFlow";
 
 export function BuyPage({ listingId, token: urlToken }: { listingId: string; token: string | null }) {
   const token = urlToken ?? loadBuyer()?.token ?? null;
+  useSoundUnlock();
   const flow = useOfferFlow(token);
   const { offer, setOffer, onLive } = flow;
   const [buyerId, setBuyerId] = useState<string | null>(null);
@@ -44,8 +46,20 @@ export function BuyPage({ listingId, token: urlToken }: { listingId: string; tok
     if (opened && offer === null) window.location.replace(PAGE.join);
   }, [opened, offer]);
 
-  if (offer?.step === "pass") return <PassScreen pass={offer.pass} free={offer.free} spotLabel={null} />;
-  if (offer) return <OfferScreen offer={offer} busy={flow.busy} onBuy={flow.buy} onNotNow={flow.notNow} onPay={flow.pay} />;
+  if (offer?.step === "pass")
+    return (
+      <>
+        <MuteButton />
+        <PassScreen pass={offer.pass} free={offer.free} spotLabel={null} />
+      </>
+    );
+  if (offer)
+    return (
+      <>
+        <MuteButton />
+        <OfferScreen offer={offer} busy={flow.busy} onBuy={flow.buy} onNotNow={flow.notNow} onPay={flow.pay} />
+      </>
+    );
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-[390px] flex-col items-center px-5 pt-5 text-center">
@@ -53,7 +67,7 @@ export function BuyPage({ listingId, token: urlToken }: { listingId: string; tok
         <Logo />
       </div>
       <div className="flex flex-1 flex-col items-center justify-center">
-        <Mascot pose="sitting" size={140} className="zee-bounce" />
+        <Mascot cycle={["sitting", "thinking"]} motion="bob" size={140} />
         {missing && (
           <a href={PAGE.join} className="mt-6 font-bold text-forest underline">
             Get fresh food for less, near campus.
