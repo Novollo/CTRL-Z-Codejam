@@ -5,7 +5,13 @@ Format: `- [ ] [track X] what you need · why · date`.
 
 ## Open requests
 
-_(none yet)_
+_(none open)_
+
+## Answered requests
+
+- [x] [track B] `buyer_id` on `GET /api/listings/:id` · **Approved** (Nov 21): `ListingCardResponse.buyer_id` added; the stub returns `b_demo`. Track B: switch `/buy/:id` to `/ws` like `/join`. Track C: return the token's buyer id.
+- [x] [track A] No "not sold" ending in the mock run · **OK as built** (Nov 21): keep the `?end=` switch inside `web/src/seller`; the shared mock stays as it is.
+- [x] [track A] Thank-you text when the free meal is taken · **Use "Someone nearby took it. Thank you!"** for now (Nov 21). The team may change the words later.
 
 ---
 
