@@ -49,7 +49,7 @@ export function ProfileForm({ initial, onSubmit }: { initial: BuyerProfileInput;
       <Logo />
       <div className="ui-fade-in mt-6 flex items-end gap-3">
         <h1 className="flex-1 text-[32px] leading-[1.1] font-bold text-ink">Get fresh food for less, near campus.</h1>
-        <Mascot pose="sitting" motion="bounce" size={92} className="shrink-0" />
+        <Mascot pose="waving" motion="bounce" size={92} className="shrink-0" />
       </div>
 
       <label className="ui-slide-up ui-delay-1 mt-7 block">

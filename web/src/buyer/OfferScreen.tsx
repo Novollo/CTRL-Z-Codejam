@@ -2,7 +2,7 @@
 import { useEffect, useRef } from "react";
 import { TAG_LABELS } from "@shared/catalog";
 import { LOCK_SEC, formatClock, formatPrice } from "@shared/constants";
-import { sound } from "../ui";
+import { Mascot, sound } from "../ui";
 import { LogoTile } from "./logos";
 import type { Offer } from "./useOfferFlow";
 import { BottomButton, FoodPhoto, Icon, Tag, useNow } from "./ui";
@@ -65,7 +65,7 @@ export function OfferScreen({ offer, busy, onBuy, onNotNow, onPay }: Props) {
   if (offer.step === "locked") {
     return (
       <div className="buyer-sheet-up fixed inset-0 z-50 flex flex-col bg-white">
-        <div className="mx-auto flex w-full max-w-[390px] flex-1 flex-col px-5 pt-12">
+        <div className="mx-auto flex w-full max-w-[390px] flex-1 flex-col px-5 pt-8">
           {offer.timedOut ? (
             <div className="ui-fade-in flex flex-1 flex-col items-center justify-center text-center">
               <span className="flex h-20 w-20 items-center justify-center rounded-full bg-amber/15">
@@ -75,8 +75,11 @@ export function OfferScreen({ offer, busy, onBuy, onNotNow, onPay }: Props) {
             </div>
           ) : (
             <>
-              <h1 className="ui-pop-in text-center text-[30px] leading-tight font-bold text-ink">It's yours for 1 minute.</h1>
-              <div className="mt-8">
+              <div className="flex justify-center">
+                <Mascot pose="proud" motion="breathe" size={96} />
+              </div>
+              <h1 className="ui-pop-in mt-2 text-center text-[30px] leading-tight font-bold text-ink">It's yours for 1 minute.</h1>
+              <div className="mt-6">
                 <LockRing lockUntil={offer.lockUntil} now={now} />
               </div>
               <div className="ui-slide-up ui-delay-2 mt-8 flex items-center gap-3 rounded-card border border-line p-3">
@@ -108,7 +111,14 @@ export function OfferScreen({ offer, busy, onBuy, onNotNow, onPay }: Props) {
   return (
     <div className="buyer-sheet-up fixed inset-0 z-50 overflow-y-auto bg-white">
       <div className={`mx-auto flex min-h-full w-full max-w-[390px] flex-col px-5 pt-5 ${lost ? "buyer-shake buyer-grey" : ""}`}>
-        <FoodPhoto src={card.photo_url} alt={card.restaurant_name} className="h-44 w-full" />
+        <div className="relative">
+          <FoodPhoto src={card.photo_url} alt={card.restaurant_name} className="h-44 w-full" />
+          {!lost && (
+            <span className="ui-pop-in ui-delay-2 absolute -bottom-5 right-2 rounded-full bg-white p-1 shadow-md">
+              <Mascot pose="pointing" motion="bob" size={72} />
+            </span>
+          )}
+        </div>
 
         <div className="mt-4 flex items-center gap-3">
           <LogoTile src={card.logo_url} alt={card.restaurant_name} size={44} />
@@ -192,8 +202,11 @@ export function OfferScreen({ offer, busy, onBuy, onNotNow, onPay }: Props) {
       </div>
 
       {lost && (
-        <div className="fixed inset-x-0 top-1/3 z-10 mx-auto w-full max-w-[390px] px-5">
-          <p className="ui-pop-in rounded-card bg-ink px-5 py-6 text-center text-h2 text-white shadow-xl">
+        <div className="fixed inset-x-0 top-1/4 z-10 mx-auto flex w-full max-w-[390px] flex-col items-center px-5">
+          <span className="ui-pop-in mb-3 rounded-full bg-white p-2 shadow-lg">
+            <Mascot pose="thinking" motion="wiggle" size={96} />
+          </span>
+          <p className="ui-pop-in w-full rounded-card bg-ink px-5 py-6 text-center text-h2 text-white shadow-xl">
             Grabbed by someone at {formatPrice(offer.soldPrice)}.
           </p>
         </div>

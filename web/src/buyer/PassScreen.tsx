@@ -1,16 +1,23 @@
 // B5 pickup pass (booklet 6, design round 2): big celebration and a ticket. Only the winning buyer gets this.
+import { useEffect, useState } from "react";
 import type { PickupPass } from "@shared/types";
 import { Confetti, Mascot } from "../ui";
 import { LogoTile, useRestaurants } from "./logos";
 import { Icon, formatTime } from "./ui";
 
 export function PassScreen({ pass, free, spotLabel }: { pass: PickupPass; free: boolean; spotLabel: string | null }) {
+  // Zee runs in with the bag, then jumps for joy with sparkles (round 2c).
+  const [cheer, setCheer] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setCheer(true), 1400);
+    return () => clearTimeout(t);
+  }, []);
   const logo = useRestaurants().find((r) => r.name === pass.restaurant_name)?.logo_url;
   return (
     <div className="buyer-sheet-up fixed inset-0 z-50 overflow-y-auto bg-white">
       <Confetti />
       <div className="mx-auto flex min-h-full w-full max-w-[390px] flex-col items-center px-5 pt-8 pb-8 text-center">
-        <Mascot pose="bag" motion="bounce" size={150} sparkles />
+        {cheer ? <Mascot pose="jumping" motion="jump" size={150} sparkles /> : <Mascot pose="bag" motion="bounce" size={150} />}
         <h1 className="ui-pop-in ui-delay-2 mt-3 text-[32px] leading-tight font-bold text-ink">{free ? "Go get it!" : "Paid. Go get it!"}</h1>
 
         <div className="ui-slide-up ui-delay-3 relative mt-6 w-full rounded-[20px] bg-mint text-left shadow-sm">
