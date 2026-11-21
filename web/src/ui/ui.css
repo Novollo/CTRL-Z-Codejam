@@ -14,6 +14,9 @@
 @keyframes ui-shimmer { from { background-position: -200% 0 } to { background-position: 200% 0 } }
 @keyframes ui-float-up { 0% { opacity: 0; transform: translateY(6px) } 20% { opacity: 1 } 100% { opacity: 0; transform: translateY(-28px) } }
 @keyframes ui-sparkle { 0%, 100% { opacity: 0; transform: scale(.4) rotate(0) } 50% { opacity: 1; transform: scale(1) rotate(45deg) } }
+@keyframes ui-doodle-drift { from { background-position: 0 0 } to { background-position: 240px 240px } }
+@keyframes ui-press { 0% { transform: scale(1) } 40% { transform: scale(.94) } 100% { transform: scale(1) } }
+@keyframes ui-flow-in { from { opacity: 0; transform: translateY(14px) scale(.98) } to { opacity: 1; transform: none } }
 @keyframes ui-price-drop { 0% { transform: translateY(-6px); color: var(--color-leaf) } 100% { transform: translateY(0) } }
 
 .zee-bob { animation: zee-bob 2.4s ease-in-out infinite }
@@ -30,6 +33,12 @@
 .ui-float-up { animation: ui-float-up 1.4s ease-out both }
 .ui-sparkle { animation: ui-sparkle 1.4s ease-in-out infinite }
 .ui-price-drop { animation: ui-price-drop .5s ease-out }
+.ui-doodle-drift { animation: ui-doodle-drift 60s linear infinite }
+/* Buttons: add `ui-press` for a springy press; `ui-flow-in` + ui-delay-* to let content flow in. */
+.ui-press { transition: transform .12s ease-out, box-shadow .12s ease-out }
+.ui-press:active { transform: scale(.95) }
+.ui-press:hover { box-shadow: 0 6px 18px rgb(30 86 49 / .18) }
+.ui-flow-in { animation: ui-flow-in .55s cubic-bezier(.2, .8, .2, 1) both }
 .ui-shimmer {
   background: linear-gradient(90deg, transparent 0%, rgb(255 255 255 / .55) 50%, transparent 100%) var(--color-mint);
   background-size: 200% 100%;

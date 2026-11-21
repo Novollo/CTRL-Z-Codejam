@@ -3,3 +3,5 @@
 export { Mascot, type Pose, type Motion } from "./Mascot";
 export { Confetti } from "./Confetti";
 export { sound, haptic } from "./sound";
+export { MuteButton } from "./MuteButton";
+export { Doodles } from "./Doodles";

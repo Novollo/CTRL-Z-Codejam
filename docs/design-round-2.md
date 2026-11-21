@@ -65,3 +65,33 @@ The team's logos are in `web/public/img/logos/` (`fiveguys`, `dominos`, `timhort
 - `ListingCard.items` comes from the order (already wired).
 - Pass item descriptions to the agent: `AgentInput.items` entries as `"Little Cheeseburger: One hand-formed beef patty, …"` so the selling line can say what's in it.
 - Admin `GET /api/admin/state` stays as is. (DEMO_CROWD is a Worker setting.)
+
+# Round 3 (team feedback, Nov 21 evening)
+
+## Sounds: only when something happens
+The team heard repeating sounds while muted. Causes: mute only applied to one page, and the seller feed played a sound every ~2.8 s. The kit now enforces the rule (`web/src/ui/sound.ts`):
+- **Mute is global** across every tab and `/stage` frame. Use the shared `<MuteButton />` from `web/src/ui` and delete your own mute button.
+- Hidden pages never play. Each sound has a cooldown. `sound.tick()` does nothing.
+- **Allowed sounds:** `tap` when the user presses a button that does something; `ping` when an offer opens; `lock` on "It's yours"; `success` once when listed or paid; `cash` once on sold; `lost` once on "Grabbed by someone". **Never** on feed lines, stats, price drops, timers, page loads or animations. Remove every other call.
+
+## Grey doodle backgrounds (less blank)
+`<Doodles variant="food" | "city" | "mix" tone opacity />` from `web/src/ui`: a soft line-icon pattern like the Uber Eats screenshot (food icons; or campus/city: buildings, a domed hall, Mount Royal, trees, a bike, a tram). Put it behind content (`relative` container, content above), low opacity (0.05–0.10), forest tone on mint, ink tone on white. Use it on: S2 agent screen (food), the onboarding top halves (city on card 1, food on 2–3), B2 (city), B3 card header (food), the map picker frame (city, very faint). Not everywhere, just enough that no big area looks empty.
+
+## Motion: buttons and flow
+- Every tappable button: add `ui-press` (springy press + soft hover shadow) and `sound.tap()` when it does something.
+- Content that appears: `ui-flow-in` with `ui-delay-1..4` so sections flow in one after another.
+
+## Mascot images fixed
+The bird poses are re-cut from the sheet: no leftovers from neighbouring poses, the same scale for every pose, the same ground line. **Never clip Zee:** no `overflow-hidden` circle or tight box around the mascot. Let it stand on the background or on a soft shape bigger than it.
+
+## Seller S2: a bit longer
+Lines about **2.2 s** apart (was 1.6 s), food `Doodles` on the mint background, then thumbs-up and "See my listing →" as before.
+
+## Buyer onboarding: nicer, less bland
+Doodles on each coloured top half, Zee centred and never cut off, headline and text flowing in, page dots that animate, `ui-press` on Next / Get started, a soft slide between cards. The "Campus favourites" logo row stays (the team likes it).
+
+## B1 "Where are you?" → a campus map
+Draw `CAMPUS_MAP` from `shared/campusMap.ts` as an SVG (our own schematic, not an official map): light grey streets with labels, a green lower field, grey decoration buildings, and the **8 pickable buildings in red**. Tap a building to pick it: it pops (scale), turns darker red, gets a white outline and a pin with the name above it, plus `sound.tap()` and `haptic.light()`. Show the picked name under the map ("📍 Trottier"). Keep a small chip list under the map as a fallback (also good for accessibility). Small "Not to scale" note. Map width = screen width minus padding; buildings must be easy to tap on a phone.
+
+## B1 "What do you like?": allow everything
+Add an **"Anything 🍽️"** chip first, selected by default (it means `food_types = []`). Picking a specific type unselects Anything; picking Anything clears the others. Same idea for Diet: a "No restrictions" chip first (it means `diet = []`).
