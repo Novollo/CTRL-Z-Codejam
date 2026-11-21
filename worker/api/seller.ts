@@ -49,7 +49,7 @@ seller.post("/orders/:id/undo", async (c) => {
   });
   const input: AgentInput = {
     restaurant: restaurant.name,
-    items: order.items.map((i) => i.name),
+    items: order.items.map((i) => (i.description ? `${i.name}: ${i.description}` : i.name)), // round 2: what's in it
     food_price: order.food_price,
     minutes_until_ready: Math.max(0, Math.round(((readyAt - now) * speed) / 60_000)),
     active_nearby: nearby.length,
