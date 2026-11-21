@@ -35,15 +35,6 @@ export function loadToken(): string | null {
   }
 }
 
-/** Keep a Telegram buyer's token for the return from Stripe (/join?paid=), unless a web profile is saved. */
-export function saveTokenIfNone(token: string): void {
-  try {
-    if (!localStorage.getItem(ID_KEY)) localStorage.setItem(TOKEN_KEY, token);
-  } catch {
-    // ignore
-  }
-}
-
 export function clearBuyer(): void {
   try {
     localStorage.removeItem(ID_KEY);

@@ -6,52 +6,38 @@ import { connectLive } from "../lib/live";
 import { apiCall } from "../lib/api";
 import { OfferScreen } from "./OfferScreen";
 import { PassScreen } from "./PassScreen";
-import { loadBuyer, saveTokenIfNone } from "./storage";
+import { loadBuyer, saveBuyer } from "./storage";
 import { Logo, Mascot } from "./ui";
 import { openCard, useOfferFlow } from "./useOfferFlow";
 
-/** Without a buyer id (Telegram-only buyer) there is no live connection: refresh the card this often. */
-const POLL_MS = 2000;
-
 export function BuyPage({ listingId, token: urlToken }: { listingId: string; token: string | null }) {
-  const saved = loadBuyer();
-  const token = urlToken ?? saved?.token ?? null;
-  const liveId = saved && saved.token === token ? saved.id : null; // same buyer as the saved web profile
+  const token = urlToken ?? loadBuyer()?.token ?? null;
   const flow = useOfferFlow(token);
   const { offer, setOffer, onLive } = flow;
-  const [opened, setOpened] = useState(false);
+  const [buyerId, setBuyerId] = useState<string | null>(null);
   const [missing, setMissing] = useState(false);
+  const opened = buyerId !== null;
 
-  // Open B3 for this listing.
+  // Open B3 for this listing, and save id + token so /join (and the return from Stripe) knows this buyer.
   useEffect(() => {
     if (!token) {
       setMissing(true);
       return;
     }
-    saveTokenIfNone(token);
     apiCall<ListingCardResponse>("GET", API.listing(listingId), undefined, token)
       .then((res) => {
+        saveBuyer({ id: res.buyer_id, token });
         setOffer(openCard(res.listing, res.reason));
-        setOpened(true);
+        setBuyerId(res.buyer_id);
       })
       .catch(() => setMissing(true));
   }, [listingId, token, setOffer]);
 
-  // Live updates: the /ws connection when we know the buyer id, else a light refresh of the card.
-  const watching = opened && offer?.step === "card";
+  // Live updates: ticks, B-hold, B-lost, the pass.
   useEffect(() => {
-    if (!opened || !liveId) return;
-    return connectLive({ role: "buyer", buyerId: liveId }, onLive);
-  }, [opened, liveId, onLive]);
-  useEffect(() => {
-    if (!watching || liveId || !token) return;
-    const t = setInterval(() => {
-      apiCall<ListingCardResponse>("GET", API.listing(listingId), undefined, token)
-        .then((res) => setOffer((o) => (o?.step === "card" ? openCard(res.listing, o.reason) : o)))
-        .catch(() => {});
-    }, POLL_MS);
-    return () => clearInterval(t);
-  }, [watching, liveId, listingId, token, setOffer]);
+    if (!buyerId) return;
+    return connectLive({ role: "buyer", buyerId }, onLive);
+  }, [buyerId, onLive]);
 
   // The card closed (Not now, grabbed, time ran out): go to the buyer page (B2, or B1 if no web profile yet).
   useEffect(() => {
