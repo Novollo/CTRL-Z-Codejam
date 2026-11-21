@@ -1,9 +1,11 @@
 // B5 pickup pass (booklet 6, design round 2): big celebration and a ticket. Only the winning buyer gets this.
 import type { PickupPass } from "@shared/types";
 import { Confetti, Mascot } from "../ui";
+import { LogoTile, useRestaurants } from "./logos";
 import { Icon, formatTime } from "./ui";
 
 export function PassScreen({ pass, free, spotLabel }: { pass: PickupPass; free: boolean; spotLabel: string | null }) {
+  const logo = useRestaurants().find((r) => r.name === pass.restaurant_name)?.logo_url;
   return (
     <div className="buyer-sheet-up fixed inset-0 z-50 overflow-y-auto bg-white">
       <Confetti />
@@ -13,7 +15,10 @@ export function PassScreen({ pass, free, spotLabel }: { pass: PickupPass; free: 
 
         <div className="ui-slide-up ui-delay-3 relative mt-6 w-full rounded-[20px] bg-mint text-left shadow-sm">
           <div className="p-5">
-            <p className="text-h3 text-ink">{pass.restaurant_name}</p>
+            <div className="flex items-center gap-3">
+              <LogoTile src={logo} alt={pass.restaurant_name} size={48} />
+              <p className="text-h3 text-ink">{pass.restaurant_name}</p>
+            </div>
             <p className="mt-1.5 flex items-start gap-1.5 text-small text-stone">
               <Icon name="pin" className="h-4 w-4 shrink-0 text-forest" />
               {pass.restaurant_address}

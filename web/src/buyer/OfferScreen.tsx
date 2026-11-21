@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import { TAG_LABELS } from "@shared/catalog";
 import { LOCK_SEC, formatClock, formatPrice } from "@shared/constants";
 import { sound } from "../ui";
+import { LogoTile } from "./logos";
 import type { Offer } from "./useOfferFlow";
 import { BottomButton, FoodPhoto, Icon, Tag, useNow } from "./ui";
 
@@ -109,16 +110,19 @@ export function OfferScreen({ offer, busy, onBuy, onNotNow, onPay }: Props) {
       <div className={`mx-auto flex min-h-full w-full max-w-[390px] flex-col px-5 pt-5 ${lost ? "buyer-shake buyer-grey" : ""}`}>
         <FoodPhoto src={card.photo_url} alt={card.restaurant_name} className="h-44 w-full" />
 
-        <p className="mt-4 flex items-center gap-1.5 text-small font-semibold text-stone">
-          {card.restaurant_name}
-          {card.walk_min !== null && (
-            <>
-              <span>·</span>
-              <Icon name="walk" className="h-4 w-4" />
-              {card.walk_min} min
-            </>
-          )}
-        </p>
+        <div className="mt-4 flex items-center gap-3">
+          <LogoTile src={card.logo_url} alt={card.restaurant_name} size={44} />
+          <p className="flex items-center gap-1.5 text-small font-semibold text-stone">
+            <span className="text-body font-bold text-ink">{card.restaurant_name}</span>
+            {card.walk_min !== null && (
+              <>
+                <span>·</span>
+                <Icon name="walk" className="h-4 w-4" />
+                {card.walk_min} min
+              </>
+            )}
+          </p>
+        </div>
         <h1 className="mt-1 text-[26px] leading-tight font-bold text-ink">{card.title}</h1>
         <p className="mt-1 text-stone">{card.selling_line}</p>
 

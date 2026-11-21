@@ -3,6 +3,7 @@ import type { BuyerProfileInput } from "@shared/api";
 import { CAMPUS_SPOTS, FOOD_TYPES } from "@shared/catalog";
 import { TELEGRAM_BOT_URL } from "@shared/constants";
 import { Mascot } from "../ui";
+import { LogoMarquee } from "./logos";
 import { Icon, Logo, Toggle } from "./ui";
 
 export const spotLabel = (spot: BuyerProfileInput["spot"]): string | null => CAMPUS_SPOTS.find((s) => s.key === spot)?.label ?? null;
@@ -59,6 +60,8 @@ export function WaitingScreen({ profile, onToggle, onEdit }: { profile: BuyerPro
           </button>
         </div>
       </div>
+
+      <LogoMarquee className="mb-4" />
 
       <div className="mb-4 grid grid-cols-2 gap-2">
         {LIVE_STRIP.map((l, k) => (

@@ -2,9 +2,10 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { formatPrice, roundPriceDown } from "@shared/constants";
 import { Mascot, haptic, sound, type Motion, type Pose } from "../ui";
+import { LogoMarquee } from "./logos";
 import { BottomButton, Logo } from "./ui";
 
-type Card = { bg: string; pose: Pose; motion: Motion; title: string; text: string; extra?: ReactNode };
+type Card = { bg: string; pose: Pose; motion: Motion; title: string; text: string; extra?: ReactNode; below?: ReactNode };
 
 /** Card 2: a mini price that ticks down from the food price to the floor, then starts again. */
 function MiniTicker() {
@@ -36,6 +37,7 @@ const CARDS: Card[] = [
     motion: "bounce",
     title: "Get fresh food for less, near campus.",
     text: "Regretted orders near McGill, at a falling price.",
+    below: <LogoMarquee className="mt-5" />,
   },
   {
     bg: "bg-leaf",
@@ -94,6 +96,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
               <div className="flex flex-1 flex-col px-6 pt-7">
                 <h1 className={`text-[32px] leading-[1.1] font-bold text-ink ${k === i ? "ui-slide-up" : ""}`}>{c.title}</h1>
                 <p className={`mt-3 text-body text-stone ${k === i ? "ui-slide-up ui-delay-2" : ""}`}>{c.text}</p>
+                {c.below}
               </div>
             </section>
           ))}
