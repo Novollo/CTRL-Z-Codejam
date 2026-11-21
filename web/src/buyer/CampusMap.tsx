@@ -117,7 +117,7 @@ export function CampusMap({ value, onChange }: { value: CampusSpot | null; onCha
             })}
           {picked && <Pin key={picked.spot} b={picked} />}
         </svg>
-        <span className="absolute right-2 bottom-1.5 text-[11px] text-stone">{CAMPUS_MAP.note}</span>
+        <span className="pointer-events-none absolute top-1 right-2 rounded-full bg-white/80 px-1.5 text-[11px] text-stone">{CAMPUS_MAP.note}</span>
       </div>
 
       <p className="mt-2 min-h-6 text-body font-bold text-ink" aria-live="polite">
