@@ -4,7 +4,7 @@ import { formatPrice } from "@shared/constants";
 import type { OrderResponse } from "@shared/api";
 import type { OrderStatus } from "@shared/types";
 import { CheckIcon, StoreIcon, UndoIcon } from "./icons";
-import { Mascot } from "./Mascot";
+import { Mascot } from "../ui";
 
 const STEPS: { status: OrderStatus; label: string }[] = [
   { status: "received", label: "Order received" },
@@ -29,7 +29,7 @@ export function OrderScreen({ data, status, onUndo }: { data: OrderResponse; sta
         </div>
 
         <div className="px-5 pt-5">
-          <h1 className="text-h1 text-ink">
+          <h1 className="text-[32px] leading-tight font-bold text-ink">
             {restaurant.name} · {order.type === "pickup" ? "Pickup" : "Delivery"}
           </h1>
           <p className="mt-1 text-body text-stone">Order {orderNumber}</p>
@@ -37,8 +37,11 @@ export function OrderScreen({ data, status, onUndo }: { data: OrderResponse; sta
           <ProgressBar stepIndex={stepIndex} />
 
           <div className="mt-6 border-t border-line pt-4">
-            {order.items.map((item) => (
-              <Row key={item.name} label={item.name} value={formatPrice(item.price)} strong />
+            {order.items.map((item, i) => (
+              <div key={item.name} className={`ui-slide-up ui-delay-${i + 1} py-2`}>
+                <Row label={item.name} value={formatPrice(item.price)} strong />
+                {item.description && <p className="pr-16 text-small leading-snug text-stone">{item.description}</p>}
+              </div>
             ))}
             <div className="mt-3 border-t border-line pt-3">
               <Row label="Service fee" value={formatPrice(service_fee)} />
@@ -58,12 +61,12 @@ export function OrderScreen({ data, status, onUndo }: { data: OrderResponse; sta
         {status === "preparing" && (
           <button
             onClick={onUndo}
-            className="flex h-bottom w-full items-center justify-center gap-2 rounded-card bg-forest text-h3 text-white active:opacity-90"
+            className="ui-pop-in flex h-bottom w-full items-center justify-center gap-2 rounded-card bg-forest text-h3 text-white shadow-lg shadow-forest/25 transition-transform active:scale-[0.98]"
           >
             <UndoIcon size={22} />
             Ctrl+Z this order
             <span className="ml-1 overflow-hidden rounded-full bg-white">
-              <Mascot pose="sitting" size={32} />
+              <Mascot pose="sitting" motion="none" size={32} />
             </span>
           </button>
         )}

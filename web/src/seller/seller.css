@@ -1,37 +1,14 @@
-/* Seller app animations (booklet 11.4: simple CSS only). */
+/* Seller-only motion. Everything else comes from the shared kit (web/src/ui/ui.css). */
 
-@keyframes zee-stir {
-  0%, 100% { transform: rotate(-6deg) translateY(0); }
-  50% { transform: rotate(6deg) translateY(-4px); }
-}
-.zee-stir { animation: zee-stir 1.2s ease-in-out infinite; transform-origin: 50% 90%; }
-
-@keyframes zee-bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-.zee-bounce { animation: zee-bounce 0.9s ease-in-out infinite; }
-
-@keyframes zee-breathe {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.03); }
-}
-.zee-breathe { animation: zee-breathe 3s ease-in-out infinite; }
-
-@keyframes zee-fade-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.zee-fade-in { animation: zee-fade-in 0.4s ease-out both; }
-
-@keyframes zee-sparkle {
-  0%, 100% { opacity: 0; transform: scale(0.4); }
-  50% { opacity: 1; transform: scale(1); }
-}
-.zee-sparkle { animation: zee-sparkle 1.4s ease-in-out infinite; }
-
-@keyframes zee-sheet-up {
+@keyframes seller-sheet-up {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
 }
-.zee-sheet-up { animation: zee-sheet-up 0.3s ease-out both; }
+.seller-sheet-up { animation: seller-sheet-up 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+@keyframes seller-spin { to { transform: rotate(360deg); } }
+.seller-spin { animation: seller-spin 0.9s linear infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  [class*="seller-"] { animation-duration: 0.001s !important; animation-iteration-count: 1 !important; }
+}

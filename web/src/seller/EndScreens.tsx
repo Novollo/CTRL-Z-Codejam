@@ -1,7 +1,8 @@
-// S5a. Sold, and S5b. Not sold (booklet 5, S5a and S5b).
+// S5a. Sold (big celebration), and S5b. Not sold (booklet 5, S5a and S5b + design round 2).
+import { useEffect, useState } from "react";
 import { formatPrice } from "@shared/constants";
-import { Sparkle } from "./icons";
-import { Mascot } from "./Mascot";
+import { Confetti, Mascot, haptic, sound, type Motion, type Pose } from "../ui";
+import { CountUp } from "./CountUp";
 
 /** "14:32" in the phone's local time. */
 const clockTime = (ms: number) => {
@@ -9,49 +10,89 @@ const clockTime = (ms: number) => {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 };
 
+const COUNT_MS = 1400;
+
 export function SoldScreen({ soldPrice, orderTotal, pickupBy }: { soldPrice: number; orderTotal: number; pickupBy: number }) {
   const share = Math.round((soldPrice / orderTotal) * 100);
+  const [counted, setCounted] = useState(false);
+
+  useEffect(() => {
+    sound.cash();
+    haptic.success();
+    const t = setTimeout(() => {
+      setCounted(true);
+      sound.success();
+    }, COUNT_MS + 100);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
-    <div className="flex h-full flex-col items-center justify-center bg-white px-8 text-center">
-      <div className="relative">
-        <Sparkle size={22} className="zee-sparkle absolute -top-2 -left-6 text-leaf" />
-        <Sparkle size={16} className="zee-sparkle absolute top-6 -right-8 text-leaf [animation-delay:0.4s]" />
-        <Sparkle size={14} className="zee-sparkle absolute bottom-4 -left-8 text-leaf [animation-delay:0.8s]" />
-        <div className="zee-bounce">
-          <Mascot pose="jumping" size={190} />
-        </div>
+    <div className="relative flex h-full flex-col items-center justify-center overflow-hidden bg-mint px-8 text-center">
+      <Confetti pieces={160} durationMs={3200} />
+      <div className="ui-pop-in">
+        <Mascot pose="jumping" motion="jump" sparkles size={200} />
       </div>
-      <h1 className="mt-8 text-[40px] leading-tight font-bold text-ink">Sold!</h1>
-      <p className="mt-2 text-h2 text-ink">
-        You got <span className="font-mono">{formatPrice(soldPrice)}</span> back.
+      <h1 className="ui-pop-in ui-delay-2 mt-6 text-[44px] leading-tight font-bold text-forest">Sold!</h1>
+      <p className="ui-slide-up ui-delay-3 mt-2 text-h2 text-ink">
+        You got <CountUp value={soldPrice} from={0} durationMs={COUNT_MS} format={formatPrice} className="font-mono text-[28px] font-bold text-forest" /> back.
       </p>
-      <p className="mt-4 text-h3 text-leaf">You undid {share}% of your mistake.</p>
-      <p className="mt-6 text-body text-balance text-stone">A buyer picks it up at {clockTime(pickupBy)}. Nothing else to do.</p>
+      <div className="mt-5 h-12">
+        {counted && (
+          <p className="ui-pop-in rounded-full bg-forest px-5 py-2.5 text-h3 text-white shadow-lg shadow-forest/25">
+            You undid <span className="text-leaf">{share}%</span> of your mistake.
+          </p>
+        )}
+      </div>
+      <p className="ui-fade-in mt-6 text-body text-balance text-stone" style={{ animationDelay: `${COUNT_MS / 1000 + 0.4}s` }}>
+        A buyer picks it up at {clockTime(pickupBy)}. Nothing else to do.
+      </p>
     </div>
   );
 }
 
 export type NotSoldKind = "pickup" | "free" | "free_taken" | "donated";
 
+const LOOK: Record<NotSoldKind, { pose: Pose; motion: Motion; sparkles?: boolean }> = {
+  pickup: { pose: "bag", motion: "wiggle" },
+  free: { pose: "sitting", motion: "breathe" },
+  free_taken: { pose: "jumping", motion: "jump", sparkles: true },
+  donated: { pose: "bag", motion: "bob", sparkles: true },
+};
+
 export function NotSoldScreen({ kind, restaurantName, pickupCode }: { kind: NotSoldKind; restaurantName: string; pickupCode: string }) {
+  const look = LOOK[kind];
+
+  useEffect(() => {
+    if (kind === "free_taken" || kind === "donated") {
+      sound.success();
+      haptic.success();
+    } else {
+      sound.tap();
+      haptic.light();
+    }
+  }, [kind]);
+
   return (
-    <div className="flex h-full flex-col items-center justify-center bg-white px-8 text-center text-balance">
-      <Mascot pose={kind === "pickup" ? "bag" : "sitting"} size={170} />
+    <div key={kind} className="relative flex h-full flex-col items-center justify-center bg-white px-8 text-center text-balance">
+      {kind === "free_taken" && <Confetti pieces={90} />}
+      <div className="ui-pop-in">
+        <Mascot pose={look.pose} motion={look.motion} sparkles={look.sparkles} size={180} />
+      </div>
       {kind === "pickup" && (
         <>
-          <p className="mt-8 text-h2 text-ink">Nobody grabbed it. Your order is waiting at {restaurantName}.</p>
-          <div className="mt-6 rounded-card bg-mint px-6 py-4">
+          <p className="ui-slide-up ui-delay-2 mt-8 text-h2 text-ink">Nobody grabbed it. Your order is waiting at {restaurantName}.</p>
+          <div className="ui-pop-in mt-6 rounded-card bg-mint px-6 py-4" style={{ animationDelay: "0.5s" }}>
             <span className="font-mono text-[36px] font-bold tracking-wide text-forest">{pickupCode}</span>
           </div>
         </>
       )}
       {kind === "free" && (
-        <p className="mt-8 text-h2 text-ink">
+        <p className="ui-slide-up ui-delay-2 mt-8 text-h2 text-ink">
           Nobody bought it, so it's now free for someone nearby. You'll get a thank-you when it's taken.
         </p>
       )}
-      {kind === "free_taken" && <p className="mt-8 text-h2 text-ink">Someone nearby took it. Thank you!</p>}
-      {kind === "donated" && <p className="mt-8 text-h2 text-ink">Thanks! Your meal is set aside for donation.</p>}
+      {kind === "free_taken" && <p className="ui-pop-in ui-delay-2 mt-8 text-h1 text-forest">Someone nearby took it. Thank you!</p>}
+      {kind === "donated" && <p className="ui-slide-up ui-delay-2 mt-8 text-h2 text-ink">Thanks! Your meal is set aside for donation.</p>}
     </div>
   );
 }

@@ -1,21 +1,21 @@
 // Seller app, route /seller (booklet section 5): S1 → S2 → S3 → S4 → S5a / S5b.
 import { useEffect, useRef, useState } from "react";
 import type { OrderResponse, UndoResponse } from "@shared/api";
-import type { Fallback } from "@shared/catalog";
+import { TAG_LABELS, type Fallback } from "@shared/catalog";
 import type { LiveMessage } from "@shared/messages";
 import type { OrderStatus } from "@shared/types";
-import { AgentScreen, AGENT_LINE_MS } from "./AgentScreen";
+import { Confetti, haptic, sound } from "../ui";
+import { AgentScreen } from "./AgentScreen";
 import { ConfirmSheet } from "./ConfirmSheet";
 import { NotSoldScreen, SoldScreen, type NotSoldKind } from "./EndScreens";
 import { LiveScreen, type LiveState } from "./LiveScreen";
+import { MuteButton } from "./MuteButton";
 import { OrderScreen } from "./OrderScreen";
 import { connectSeller, getOrder, patchListing, publishListing, stopListing, undoOrder } from "./sellerApi";
 import "./seller.css";
 
 type Screen = "order" | "agent" | "confirm" | "live" | "sold" | "notsold";
 
-/** S2 shows at least this long, so all three lines are seen. */
-const AGENT_MIN_MS = AGENT_LINE_MS * 3;
 /** The server answers within 5 s (agent timeout → defaults). Past this, quietly go back to S1. */
 const AGENT_GIVE_UP_MS = 9000;
 
@@ -27,6 +27,7 @@ export function SellerApp() {
   const [screen, setScreen] = useState<Screen>("order");
   const [sheet, setSheet] = useState<UndoResponse | null>(null);
   const [busy, setBusy] = useState(false);
+  const [burst, setBurst] = useState(0); // confetti when listed
   const [live, setLive] = useState<LiveState | null>(null);
   const [sold, setSold] = useState<{ price: number; pickupBy: number } | null>(null);
   const [notSold, setNotSold] = useState<{ kind: NotSoldKind; code: string } | null>(null);
@@ -67,16 +68,15 @@ export function SellerApp() {
     setScreen("order");
   };
 
-  // S1 → S2 → S3
+  // S1 → S2. The agent runs in the background; S2 shows "See my listing →" once it has answered.
   const onUndo = async () => {
+    sound.tap();
+    haptic.light();
+    setSheet(null);
     setScreen("agent");
     try {
-      const [res] = await Promise.all([
-        Promise.race([undoOrder(), wait(AGENT_GIVE_UP_MS).then(() => Promise.reject(new Error("timeout")))]),
-        wait(AGENT_MIN_MS),
-      ]);
+      const res = await Promise.race([undoOrder(), wait(AGENT_GIVE_UP_MS).then(() => Promise.reject(new Error("timeout")))]);
       setSheet(res);
-      setScreen("confirm");
     } catch {
       setScreen("order"); // the seller never sees an error (booklet S2)
     }
@@ -88,8 +88,21 @@ export function SellerApp() {
     setBusy(true);
     try {
       const res = await publishListing(sheet.listing_id, { floor_price: floor, fallback });
-      setLive({ price: res.price, secondsLeft: res.seconds_left, totalSeconds: res.seconds_left, reached: 0, floor, fallback });
+      setLive({
+        price: res.price,
+        secondsLeft: res.seconds_left,
+        totalSeconds: res.seconds_left,
+        reached: 0,
+        stats: null,
+        locked: false,
+        orderReady: false,
+        floor,
+        fallback,
+      });
       setScreen("live");
+      setBurst((b) => b + 1);
+      sound.success();
+      haptic.success();
       disconnect();
       stopLiveRef.current = connectSeller((msg) => onLiveMessage(sheet.listing_id, msg));
     } catch {
@@ -100,15 +113,24 @@ export function SellerApp() {
   };
 
   const onLiveMessage = (listingId: string, msg: LiveMessage) => {
-    if (msg.type === "order.status") return setStatus(msg.status);
+    if (msg.type === "order.status") {
+      setStatus(msg.status);
+      setLive((l) => l && { ...l, orderReady: msg.status === "ready" });
+      return;
+    }
     if (!("listing_id" in msg) || msg.listing_id !== listingId) return;
     const current = screenRef.current;
 
     if (current === "live") {
       if (msg.type === "listing.tick") {
         setLive((l) => l && { ...l, price: msg.price, secondsLeft: msg.seconds_left, totalSeconds: Math.max(l.totalSeconds, msg.seconds_left) });
+      } else if (msg.type === "listing.locked") {
+        setLive((l) => l && { ...l, locked: true });
+        haptic.medium();
       } else if (msg.type === "listing.unlocked") {
-        setLive((l) => l && { ...l, price: msg.price });
+        setLive((l) => l && { ...l, price: msg.price, locked: false });
+      } else if (msg.type === "listing.stats") {
+        setLive((l) => l && { ...l, stats: { seen: msg.seen, watching: msg.watching, interested: msg.interested } });
       } else if (msg.type === "listing.reach") {
         setLive((l) => l && { ...l, reached: msg.reached });
       } else if (msg.type === "listing.sold") {
@@ -156,14 +178,21 @@ export function SellerApp() {
   };
 
   return (
-    <div className="relative mx-auto h-dvh max-h-[844px] w-full max-w-[390px] overflow-hidden bg-white font-sans text-ink">
+    <div
+      onPointerDown={sound.unlock}
+      className="relative mx-auto h-dvh max-h-[844px] w-full max-w-[390px] overflow-hidden bg-white font-sans text-ink"
+    >
       {order && (screen === "order" || screen === "confirm") && <OrderScreen data={order} status={status} onUndo={onUndo} />}
-      {screen === "agent" && <AgentScreen />}
-      {screen === "confirm" && sheet && <ConfirmSheet sheet={sheet} busy={busy} onList={onList} onNeverMind={backToOrder} />}
-      {screen === "live" && live && sheet && (
+      {screen === "agent" && <AgentScreen ready={!!sheet} onSee={() => setScreen("confirm")} />}
+      {screen === "confirm" && sheet && order && (
+        <ConfirmSheet sheet={sheet} items={order.order.items} busy={busy} onList={onList} onNeverMind={backToOrder} />
+      )}
+      {screen === "live" && live && sheet && order && (
         <LiveScreen
           live={live}
           range={{ min: sheet.floor_min, max: sheet.floor_max, step: sheet.floor_step }}
+          restaurant={order.restaurant.name}
+          food={sheet.tags[0] ? TAG_LABELS[sheet.tags[0]].toLowerCase() : "good food"}
           onFloor={onFloor}
           onFallback={onFallback}
           onStop={onStop}
@@ -171,6 +200,8 @@ export function SellerApp() {
       )}
       {screen === "sold" && sold && order && <SoldScreen soldPrice={sold.price} orderTotal={order.order.total} pickupBy={sold.pickupBy} />}
       {screen === "notsold" && notSold && order && <NotSoldScreen kind={notSold.kind} restaurantName={order.restaurant.name} pickupCode={notSold.code} />}
+      {screen === "live" && burst > 0 && <Confetti key={burst} pieces={70} durationMs={2000} />}
+      <MuteButton />
     </div>
   );
 }
