@@ -1,10 +1,8 @@
 // B2 waiting (booklet 6).
 import type { BuyerProfileInput } from "@shared/api";
 import { CAMPUS_SPOTS, FOOD_TYPES } from "@shared/catalog";
+import { TELEGRAM_BOT_URL } from "@shared/constants";
 import { Logo, Mascot, Toggle } from "./ui";
-
-/** Telegram bot (booklet 7). */
-const TELEGRAM_BOT_URL = "https://t.me/CtrlZEatsBot";
 
 export const spotLabel = (spot: BuyerProfileInput["spot"]): string | null => CAMPUS_SPOTS.find((s) => s.key === spot)?.label ?? null;
 
