@@ -178,7 +178,7 @@ export async function getPass(db: D1Database, listingId: string, buyerId: string
     restaurant_name: restaurant.name,
     restaurant_address: restaurant.address,
     walk_min: walkMinutes(buyer, restaurant, await getWalkTable(db, restaurant.id)),
-    pickup_code: order.pickup_code,
+    pickup_code: listing.pickup_code ?? order.pickup_code, // round 4: the NEW code made at sale
     name_on_order: buyer.name,
     pickup_by: paidAt + storyMinToMs(PICKUP_DEADLINE_MIN, speed),
   };
