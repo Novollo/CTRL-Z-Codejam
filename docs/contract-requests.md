@@ -5,7 +5,13 @@ Format: `- [ ] [track X] what you need · why · date`.
 
 ## Open requests
 
-_(none yet)_
+_(none open)_
+
+## Answered requests
+
+- [x] [track B] `buyer_id` on `GET /api/listings/:id` · **Approved** (Nov 21): `ListingCardResponse.buyer_id` added; the stub returns `b_demo`. Track B: switch `/buy/:id` to `/ws` like `/join`. Track C: return the token's buyer id.
+- [x] [track A] No "not sold" ending in the mock run · **OK as built** (Nov 21): keep the `?end=` switch inside `web/src/seller`; the shared mock stays as it is.
+- [x] [track A] Thank-you text when the free meal is taken · **Use "Someone nearby took it. Thank you!"** for now (Nov 21). The team may change the words later.
 
 ---
 
@@ -44,4 +50,4 @@ These fill gaps in the booklet. Any track may question them here.
 - [ ] **Where does AGENT_MODE live at runtime?** It is a Worker setting, which can't change without a redeploy. Suggestion: track C stores the /admin switch in the Market Durable Object, with `AGENT_MODE` as the starting value.
 - [ ] **"A buyer picks it up at 14:32" (S5a)** vs **"Pick up by 14:52" (B5)**: is the seller's time the pickup deadline or something else? The contract sends `pickup_by` only.
 - [ ] **B-lost example says $8.40, S5a says $9.40.** The mock run sells at $9.40 (40% of $23.46).
-- [ ] **Telegram bot name:** is `@CtrlZEatsBot` free?
+- [x] **Telegram bot name:** the bot is `@ZEats_bot` (`TELEGRAM_BOT_URL` in `shared/constants.ts`).

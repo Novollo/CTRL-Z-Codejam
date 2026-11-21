@@ -130,6 +130,7 @@ export type BuyerProfile = Omit<Buyer, "token">;
 export interface ListingCardResponse {
   listing: ListingCard;
   reason: string;
+  buyer_id: string; // the buyer the token belongs to, so the page can open /ws (track B request, Nov 21)
 }
 
 /**
