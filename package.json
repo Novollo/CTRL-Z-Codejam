@@ -11,7 +11,8 @@
     "typecheck": "tsc -p tsconfig.json && tsc -p web/tsconfig.json",
     "db:local": "wrangler d1 migrations apply ctrlz-eats --local && wrangler d1 execute ctrlz-eats --local --file shared/db/seed.sql",
     "db:remote": "wrangler d1 migrations apply ctrlz-eats --remote && wrangler d1 execute ctrlz-eats --remote --file shared/db/seed.sql",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "npm run build && wrangler deploy",
+    "secrets:upload": "node scripts/upload-secrets.mjs"
   },
   "dependencies": {
     "hono": "^4.13.0",
