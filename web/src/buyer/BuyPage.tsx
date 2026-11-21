@@ -1,9 +1,65 @@
-// Track B: /buy/:listingId?t=<buyerToken>, opened from the Telegram "Buy now" button (booklet 7). Placeholder from track 0.
-export function BuyPage({ listingId }: { listingId: string; token: string | null }) {
+// /buy/:listingId?t=<buyerToken>: opened from the Telegram "Buy now" button (booklet 7).
+// Opens B3 for that listing at the live price, then B4 / B5 like /join.
+import { useEffect, useState } from "react";
+import { API, PAGE, type ListingCardResponse } from "@shared/api";
+import { connectLive } from "../lib/live";
+import { apiCall } from "../lib/api";
+import { OfferScreen } from "./OfferScreen";
+import { PassScreen } from "./PassScreen";
+import { loadBuyer, saveBuyer } from "./storage";
+import { Logo, Mascot } from "./ui";
+import { openCard, useOfferFlow } from "./useOfferFlow";
+
+export function BuyPage({ listingId, token: urlToken }: { listingId: string; token: string | null }) {
+  const token = urlToken ?? loadBuyer()?.token ?? null;
+  const flow = useOfferFlow(token);
+  const { offer, setOffer, onLive } = flow;
+  const [buyerId, setBuyerId] = useState<string | null>(null);
+  const [missing, setMissing] = useState(false);
+  const opened = buyerId !== null;
+
+  // Open B3 for this listing, and save id + token so /join (and the return from Stripe) knows this buyer.
+  useEffect(() => {
+    if (!token) {
+      setMissing(true);
+      return;
+    }
+    apiCall<ListingCardResponse>("GET", API.listing(listingId), undefined, token)
+      .then((res) => {
+        saveBuyer({ id: res.buyer_id, token });
+        setOffer(openCard(res.listing, res.reason));
+        setBuyerId(res.buyer_id);
+      })
+      .catch(() => setMissing(true));
+  }, [listingId, token, setOffer]);
+
+  // Live updates: ticks, B-hold, B-lost, the pass.
+  useEffect(() => {
+    if (!buyerId) return;
+    return connectLive({ role: "buyer", buyerId }, onLive);
+  }, [buyerId, onLive]);
+
+  // The card closed (Not now, grabbed, time ran out): go to the buyer page (B2, or B1 if no web profile yet).
+  useEffect(() => {
+    if (opened && offer === null) window.location.replace(PAGE.join);
+  }, [opened, offer]);
+
+  if (offer?.step === "pass") return <PassScreen pass={offer.pass} free={offer.free} spotLabel={null} />;
+  if (offer) return <OfferScreen offer={offer} busy={flow.busy} onBuy={flow.buy} onNotNow={flow.notNow} onPay={flow.pay} />;
+
   return (
-    <main className="mx-auto max-w-[390px] p-6">
-      <h1 className="text-h2">Offer {listingId}</h1>
-      <p className="mt-2 text-small text-stone">Track B opens B3 here for this listing.</p>
+    <main className="mx-auto flex min-h-screen w-full max-w-[390px] flex-col items-center px-5 pt-5 text-center">
+      <div className="self-start">
+        <Logo />
+      </div>
+      <div className="flex flex-1 flex-col items-center justify-center">
+        <Mascot pose="sitting" size={140} className="zee-bounce" />
+        {missing && (
+          <a href={PAGE.join} className="mt-6 font-bold text-forest underline">
+            Get fresh food for less, near campus.
+          </a>
+        )}
+      </div>
     </main>
   );
 }

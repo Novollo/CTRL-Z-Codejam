@@ -1,0 +1,16 @@
+/* Buyer page animations (CSS only, booklet 11.4). */
+@keyframes zee-slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.zee-slide-up {
+  animation: zee-slide-up 280ms ease-out;
+}
+
+@keyframes zee-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.zee-bounce {
+  animation: zee-bounce 2.4s ease-in-out infinite;
+}
