@@ -90,3 +90,11 @@
 @media (prefers-reduced-motion: reduce) {
   [class*="buyer-"] { animation-duration: .001s !important; animation-iteration-count: 1 !important; }
 }
+
+/* "Campus favourites" logo marquee (round 2b): the strip holds two copies and moves by half its width. */
+@keyframes buyer-marquee { from { transform: translateX(0); } to { transform: translateX(calc(-50% - 6px)); } }
+.buyer-marquee { animation: buyer-marquee 22s linear infinite; }
+.buyer-marquee-mask {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+}
