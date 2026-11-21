@@ -50,7 +50,7 @@ Inspiration: Uber Eats Base (clean white screens, very big bold headings, black/
 8. **`/stage`:** unchanged (two phone frames), but make sure sounds don't double up (only the frame the user taps should be unlocked; that's fine).
 
 ## Engine (track C)
-- Send **`listing.stats`** on every tick to the seller and every card holder: `seen` = pinged count, `watching` = card holders with an open WebSocket now, `interested` = active buyers whose filters match the listing (price ignored). With `DEMO_CROWD = "on"` add the crowd: grows smoothly from 0 at publish to `DEMO_CROWD.seen_max` / `interested_max` at the floor time; `watching` wobbles between `watching_min` and `watching_max`. `listing.reach.reached` = the same `seen`. Interested ≥ watching always; seen ≥ watching.
+- Send **`listing.stats`** on every tick to the seller and every card holder: `seen` = pinged count, `watching` = card holders with an open WebSocket now, `interested` = active buyers whose filters match the listing (price ignored). With `DEMO_CROWD = "on"` add the crowd: starts at `DEMO_CROWD.start_share` (45%) of the max at publish and grows smoothly to `DEMO_CROWD.seen_max` / `interested_max` at the floor time; `watching` wobbles between `watching_min` and `watching_max`. `listing.reach.reached` = the same `seen`. Interested ≥ watching always; seen ≥ watching.
 - `ListingCard.items` comes from the order (already wired).
 - Pass item descriptions to the agent: `AgentInput.items` entries as `"Little Cheeseburger: One hand-formed beef patty, …"` so the selling line can say what's in it.
 - Admin `GET /api/admin/state` stays as is. (DEMO_CROWD is a Worker setting.)
