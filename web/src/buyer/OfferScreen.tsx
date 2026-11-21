@@ -1,8 +1,7 @@
 // B3 offer card, B-hold, B-lost and B4 locked (booklet 6, design round 2). Full-screen, slides up.
-import { useEffect, useRef } from "react";
 import { TAG_LABELS } from "@shared/catalog";
 import { LOCK_SEC, formatClock, formatPrice } from "@shared/constants";
-import { Mascot, sound } from "../ui";
+import { Doodles, Mascot, sound } from "../ui";
 import { LogoTile } from "./logos";
 import type { Offer } from "./useOfferFlow";
 import { BottomButton, FoodPhoto, Icon, Tag, useNow } from "./ui";
@@ -16,19 +15,6 @@ type Props = {
 };
 
 const secondsUntil = (ms: number, now: number) => Math.max(0, Math.floor((ms - now) / 1000));
-
-/** A soft tick when the price drops, at most every 3 s (design round 2). */
-function usePriceTick(price: number) {
-  const prev = useRef(price);
-  const last = useRef(0);
-  useEffect(() => {
-    if (price < prev.current && Date.now() - last.current > 3000) {
-      sound.tick();
-      last.current = Date.now();
-    }
-    prev.current = price;
-  }, [price]);
-}
 
 /** B4: big amber ring that empties over the 60 s lock. */
 function LockRing({ lockUntil, now }: { lockUntil: number; now: number }) {
@@ -60,7 +46,6 @@ function LockRing({ lockUntil, now }: { lockUntil: number; now: number }) {
 export function OfferScreen({ offer, busy, onBuy, onNotNow, onPay }: Props) {
   const holdUntil = offer.step === "card" ? offer.holdUntil : null;
   const now = useNow(holdUntil !== null || offer.step === "locked");
-  usePriceTick(offer.card.price);
 
   if (offer.step === "locked") {
     return (
@@ -112,10 +97,13 @@ export function OfferScreen({ offer, busy, onBuy, onNotNow, onPay }: Props) {
     <div className="buyer-sheet-up fixed inset-0 z-50 overflow-y-auto bg-white">
       <div className={`mx-auto flex min-h-full w-full max-w-[390px] flex-col px-5 pt-5 ${lost ? "buyer-shake buyer-grey" : ""}`}>
         <div className="relative">
-          <FoodPhoto src={card.photo_url} alt={card.restaurant_name} className="h-44 w-full" />
+          <div className="relative isolate overflow-hidden rounded-card">
+            <FoodPhoto src={card.photo_url} alt={card.restaurant_name} className="h-44 w-full" />
+            <Doodles variant="food" tone="forest" opacity={0.08} />
+          </div>
           {!lost && (
-            <span className="ui-pop-in ui-delay-2 absolute -bottom-5 right-2 rounded-full bg-white p-1 shadow-md">
-              <Mascot pose="pointing" motion="bob" size={72} />
+            <span className="ui-pop-in ui-delay-2 absolute -bottom-6 right-1 drop-shadow-md">
+              <Mascot pose="pointing" motion="bob" size={84} />
             </span>
           )}
         </div>
@@ -193,7 +181,14 @@ export function OfferScreen({ offer, busy, onBuy, onNotNow, onPay }: Props) {
               <BottomButton onClick={onBuy} disabled={held || busy} arrow={false} className={held || busy ? "" : "buyer-pulse-btn"}>
                 Buy for <span key={card.price} className="ui-price-drop inline-block font-mono">{formatPrice(card.price)}</span>
               </BottomButton>
-              <button type="button" onClick={onNotNow} className="mt-2 w-full py-2 text-small font-semibold text-stone">
+              <button
+                type="button"
+                onClick={() => {
+                  sound.tap();
+                  onNotNow();
+                }}
+                className="ui-press mt-2 w-full rounded-card py-2 text-small font-semibold text-stone"
+              >
                 Not now
               </button>
             </>
@@ -203,7 +198,7 @@ export function OfferScreen({ offer, busy, onBuy, onNotNow, onPay }: Props) {
 
       {lost && (
         <div className="fixed inset-x-0 top-1/4 z-10 mx-auto flex w-full max-w-[390px] flex-col items-center px-5">
-          <span className="ui-pop-in mb-3 rounded-full bg-white p-2 shadow-lg">
+          <span className="ui-pop-in mb-3 flex h-32 w-32 items-center justify-center rounded-full bg-white shadow-lg">
             <Mascot pose="thinking" motion="wiggle" size={96} />
           </span>
           <p className="ui-pop-in w-full rounded-card bg-ink px-5 py-6 text-center text-h2 text-white shadow-xl">

@@ -1,7 +1,7 @@
 // Small UI pieces for the buyer pages (booklet 11, design round 2). Inline line icons, 2 px stroke.
 // Zee, sound, haptics and confetti come from the shared kit in web/src/ui.
 import { useEffect, useState, type ReactNode } from "react";
-import { haptic, sound } from "../ui";
+import { MuteButton, haptic, sound } from "../ui";
 import "./buyer.css";
 
 /** Current time, refreshed every `ms` while `on` is true. For real-time countdowns (lock, hold). */
@@ -29,7 +29,7 @@ export function useSoundUnlock(): void {
 export const formatTime = (ms: number): string =>
   new Date(ms).toLocaleTimeString("en-CA", { hour: "2-digit", minute: "2-digit", hour12: false });
 
-type IconName = "pin" | "walk" | "clock" | "check" | "bag" | "arrow" | "sound" | "mute" | "edit" | "spark" | "tag";
+type IconName = "pin" | "walk" | "clock" | "check" | "bag" | "arrow" | "edit" | "spark" | "tag";
 
 export function Icon({ name, className = "h-5 w-5" }: { name: IconName; className?: string }) {
   const paths: Record<IconName, ReactNode> = {
@@ -59,18 +59,6 @@ export function Icon({ name, className = "h-5 w-5" }: { name: IconName; classNam
       </>
     ),
     arrow: <path d="M5 12h14m-6-6 6 6-6 6" />,
-    sound: (
-      <>
-        <path d="M4 9v6h4l5 4V5L8 9H4Z" />
-        <path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11" />
-      </>
-    ),
-    mute: (
-      <>
-        <path d="M4 9v6h4l5 4V5L8 9H4Z" />
-        <path d="m17 9 5 6m0-6-5 6" />
-      </>
-    ),
     edit: <path d="M4 20h4L19 9l-4-4L4 16v4ZM13.5 6.5l4 4" />,
     spark: <path d="M12 3v4m0 10v4M3 12h4m10 0h4M6 6l2.5 2.5m7 7L18 18M6 18l2.5-2.5m7-7L18 6" />,
     tag: (
@@ -100,23 +88,12 @@ export function Logo() {
   );
 }
 
-/** Small speaker button in a corner: mutes every sound cue (saved per browser). */
-export function MuteButton() {
-  const [muted, setMuted] = useState(sound.isMuted);
-  const flip = () => {
-    sound.setMuted(!muted);
-    setMuted(!muted);
-    if (muted) sound.tap(); // just unmuted: a little confirmation
-  };
+/** The kit's global mute button, fixed in the top-right corner. */
+export function CornerMute() {
   return (
-    <button
-      type="button"
-      onClick={flip}
-      aria-label={muted ? "Sound off" : "Sound on"}
-      className="fixed top-3 right-3 z-[60] flex h-10 w-10 items-center justify-center rounded-full border border-line bg-white/90 text-ink shadow-sm backdrop-blur"
-    >
-      <Icon name={muted ? "mute" : "sound"} className="h-5 w-5" />
-    </button>
+    <div className="fixed top-3 right-3 z-[60]">
+      <MuteButton />
+    </div>
   );
 }
 
@@ -134,7 +111,7 @@ export function FoodPhoto({ src, alt, className = "" }: { src: string; alt: stri
 }
 
 /** Pill chip. Pops when selected (mint + forest), with a soft tap. */
-export function Chip({ on, onClick, children }: { on: boolean; onClick?: () => void; children: ReactNode }) {
+export function Chip({ on, onClick, small, children }: { on: boolean; onClick?: () => void; small?: boolean; children: ReactNode }) {
   return (
     <button
       type="button"
@@ -144,7 +121,7 @@ export function Chip({ on, onClick, children }: { on: boolean; onClick?: () => v
         onClick?.();
       }}
       aria-pressed={on}
-      className={`flex items-center gap-1.5 rounded-full border-2 px-4 py-2.5 text-small font-semibold transition-colors ${
+      className={`ui-press flex items-center gap-1.5 rounded-full border-2 text-small font-semibold transition-colors ${small ? "px-3 py-1.5" : "px-4 py-2.5"} ${
         on ? "ui-pop-in border-forest bg-mint text-forest" : "border-line bg-white text-ink active:scale-95"
       }`}
     >
@@ -171,7 +148,7 @@ export function Toggle({ on, onChange, label }: { on: boolean; onChange: (on: bo
         haptic.medium();
         onChange(!on);
       }}
-      className={`buyer-toggle flex w-full items-center justify-between gap-4 rounded-card border-2 p-4 text-left transition-colors ${
+      className={`buyer-toggle ui-press flex w-full items-center justify-between gap-4 rounded-card border-2 p-4 text-left transition-colors ${
         on ? "border-forest bg-mint" : "border-line bg-white"
       }`}
     >
@@ -200,9 +177,12 @@ export function BottomButton({
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={() => {
+        sound.tap();
+        onClick?.();
+      }}
       disabled={disabled}
-      className={`flex h-bottom w-full items-center justify-center gap-2 rounded-card bg-forest text-h3 font-bold text-white transition-transform active:scale-[.98] disabled:bg-line disabled:text-stone ${className}`}
+      className={`ui-press flex h-bottom w-full items-center justify-center gap-2 rounded-card bg-forest text-h3 font-bold text-white disabled:bg-line disabled:text-stone ${className}`}
     >
       {children}
       {arrow && <Icon name="arrow" className="h-5 w-5" />}

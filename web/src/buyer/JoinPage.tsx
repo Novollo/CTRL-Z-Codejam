@@ -9,7 +9,7 @@ import { Onboarding } from "./Onboarding";
 import { PassScreen } from "./PassScreen";
 import { EMPTY_PROFILE, ProfileForm } from "./ProfileForm";
 import { clearBuyer, isLocalMock, loadBuyer, loadToken, saveBuyer, type SavedBuyer } from "./storage";
-import { MuteButton, useSoundUnlock } from "./ui";
+import { CornerMute, useSoundUnlock } from "./ui";
 import { useOfferFlow } from "./useOfferFlow";
 import { WaitingScreen, spotLabel } from "./WaitingScreen";
 
@@ -110,7 +110,7 @@ export function JoinPage() {
 
   return (
     <>
-      <MuteButton />
+      <CornerMute />
       {view.kind === "intro" && <Onboarding onDone={() => setView({ kind: "form", initial: EMPTY_PROFILE })} />}
       {view.kind === "form" && (
         <>

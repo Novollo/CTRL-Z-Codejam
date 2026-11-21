@@ -1,9 +1,10 @@
 // B1 profile (booklet 6). Also used for "Edit" from B2.
 import { useState, type CSSProperties, type ReactNode } from "react";
 import type { BuyerProfileInput } from "@shared/api";
-import { BUYER_DIETS, CAMPUS_SPOTS, FOOD_TYPES, WALK_CHOICES_MIN, type BuyerDiet, type FoodType } from "@shared/catalog";
+import { BUYER_DIETS, FOOD_TYPES, WALK_CHOICES_MIN, type BuyerDiet, type FoodType } from "@shared/catalog";
 import { BUYER_MAX_PRICE, formatPrice } from "@shared/constants";
 import { Mascot, haptic } from "../ui";
+import { CampusMap } from "./CampusMap";
 import { BottomButton, Chip, Logo, Toggle } from "./ui";
 
 export const EMPTY_PROFILE: BuyerProfileInput = {
@@ -18,11 +19,11 @@ export const EMPTY_PROFILE: BuyerProfileInput = {
 
 const toggle = <T,>(list: T[], v: T): T[] => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
 
-function Section({ title, step, children }: { title: string; step: number; children: ReactNode }) {
+function Section({ title, step, chips = true, children }: { title: string; step: number; chips?: boolean; children: ReactNode }) {
   return (
-    <section className="ui-slide-up mt-7" style={{ animationDelay: `${step * 90}ms` }}>
+    <section className="ui-flow-in mt-7" style={{ animationDelay: `${step * 90}ms` }}>
       <h2 className="text-h3 text-ink">{title}</h2>
-      <div className="mt-3 flex flex-wrap gap-2">{children}</div>
+      <div className={chips ? "mt-3 flex flex-wrap gap-2" : "mt-3"}>{children}</div>
     </section>
   );
 }
@@ -52,7 +53,7 @@ export function ProfileForm({ initial, onSubmit }: { initial: BuyerProfileInput;
         <Mascot pose="waving" motion="bounce" size={92} className="shrink-0" />
       </div>
 
-      <label className="ui-slide-up ui-delay-1 mt-7 block">
+      <label className="ui-flow-in ui-delay-1 mt-7 block">
         <span className="text-small font-semibold text-ink">Your first name</span>
         <input
           value={p.name}
@@ -63,18 +64,14 @@ export function ProfileForm({ initial, onSubmit }: { initial: BuyerProfileInput;
         />
       </label>
 
-      <div className="ui-slide-up ui-delay-2 mt-5">
+      <div className="ui-flow-in ui-delay-2 mt-5">
         <Toggle on={p.notify_on} onChange={(on) => set({ notify_on: on })} label="Notify me about food nearby" />
       </div>
 
       {p.notify_on && (
         <div>
-          <Section title="Where are you?" step={0}>
-            {CAMPUS_SPOTS.map((s) => (
-              <Chip key={s.key} on={p.spot === s.key} onClick={() => set({ spot: s.key })}>
-                {s.label}
-              </Chip>
-            ))}
+          <Section title="Where are you?" step={0} chips={false}>
+            <CampusMap value={p.spot} onChange={(spot) => set({ spot })} />
           </Section>
 
           <Section title="How far will you walk?" step={1}>
@@ -86,6 +83,10 @@ export function ProfileForm({ initial, onSubmit }: { initial: BuyerProfileInput;
           </Section>
 
           <Section title="What do you like?" step={2}>
+            {/* "Anything" = no food types (round 3): exclusive with the specific types. */}
+            <Chip on={p.food_types.length === 0} onClick={() => set({ food_types: [] })}>
+              Anything 🍽️
+            </Chip>
             {FOOD_TYPES.map((f) => (
               <Chip key={f.key} on={p.food_types.includes(f.key)} onClick={() => set({ food_types: toggle<FoodType>(p.food_types, f.key) })}>
                 {f.label}
@@ -94,6 +95,10 @@ export function ProfileForm({ initial, onSubmit }: { initial: BuyerProfileInput;
           </Section>
 
           <Section title="Diet" step={3}>
+            {/* "No restrictions" = no diet (round 3). */}
+            <Chip on={p.diet.length === 0} onClick={() => set({ diet: [] })}>
+              No restrictions
+            </Chip>
             {BUYER_DIETS.map((d) => (
               <Chip key={d.key} on={p.diet.includes(d.key)} onClick={() => set({ diet: toggle<BuyerDiet>(p.diet, d.key) })}>
                 {d.label}
@@ -101,7 +106,7 @@ export function ProfileForm({ initial, onSubmit }: { initial: BuyerProfileInput;
             ))}
           </Section>
 
-          <section className="ui-slide-up mt-7" style={{ animationDelay: "360ms" }}>
+          <section className="ui-flow-in mt-7" style={{ animationDelay: "360ms" }}>
             <div className="flex items-baseline justify-between">
               <h2 className="text-h3 text-ink">Max price</h2>
               <span key={p.max_price} className="ui-pop-in rounded-full bg-mint px-3 py-1 font-mono text-h3 font-bold text-forest">

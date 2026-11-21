@@ -8,7 +8,7 @@ import { OfferScreen } from "./OfferScreen";
 import { PassScreen } from "./PassScreen";
 import { loadBuyer, saveBuyer } from "./storage";
 import { Mascot } from "../ui";
-import { Logo, MuteButton, useSoundUnlock } from "./ui";
+import { Logo, CornerMute, useSoundUnlock } from "./ui";
 import { openCard, useOfferFlow } from "./useOfferFlow";
 
 export function BuyPage({ listingId, token: urlToken }: { listingId: string; token: string | null }) {
@@ -49,14 +49,14 @@ export function BuyPage({ listingId, token: urlToken }: { listingId: string; tok
   if (offer?.step === "pass")
     return (
       <>
-        <MuteButton />
+        <CornerMute />
         <PassScreen pass={offer.pass} free={offer.free} spotLabel={null} />
       </>
     );
   if (offer)
     return (
       <>
-        <MuteButton />
+        <CornerMute />
         <OfferScreen offer={offer} busy={flow.busy} onBuy={flow.buy} onNotNow={flow.notNow} onPay={flow.pay} />
       </>
     );

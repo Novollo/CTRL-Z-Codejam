@@ -2,7 +2,7 @@
 import type { BuyerProfileInput } from "@shared/api";
 import { CAMPUS_SPOTS, FOOD_TYPES } from "@shared/catalog";
 import { TELEGRAM_BOT_URL } from "@shared/constants";
-import { Mascot } from "../ui";
+import { Doodles, Mascot, sound } from "../ui";
 import { LogoMarquee } from "./logos";
 import { Icon, Logo, Toggle } from "./ui";
 
@@ -25,7 +25,10 @@ const LIVE_STRIP = [
 export function WaitingScreen({ profile, onToggle, onEdit }: { profile: BuyerProfileInput; onToggle: (on: boolean) => void; onEdit: () => void }) {
   const on = profile.notify_on;
   return (
-    <main className="mx-auto flex min-h-[100dvh] w-full max-w-[390px] flex-col px-5 pt-5 pb-6">
+    <main className="relative isolate mx-auto flex min-h-[100dvh] w-full max-w-[390px] flex-col px-5 pt-5 pb-6">
+      <div className="absolute inset-0 -z-10">
+        <Doodles variant="city" tone="ink" opacity={0.05} />
+      </div>
       <Logo />
       <div className="mt-5">
         <Toggle on={on} onChange={onToggle} label="Notify me about food nearby" />
@@ -49,12 +52,19 @@ export function WaitingScreen({ profile, onToggle, onEdit }: { profile: BuyerPro
           <h1 key="off" className="ui-fade-in mt-7 text-h2 text-stone">Paused. No pings.</h1>
         )}
 
-        <div className="ui-slide-up ui-delay-2 mt-5 flex w-full items-center gap-3 rounded-card border border-line p-3 text-left">
+        <div className="ui-flow-in ui-delay-2 mt-5 flex w-full items-center gap-3 rounded-card border border-line bg-white p-3 text-left">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-mint text-forest">
             <Icon name="pin" className="h-5 w-5" />
           </span>
           <p className="min-w-0 flex-1 text-small text-ink">{summary(profile)}</p>
-          <button type="button" onClick={onEdit} className="flex items-center gap-1 rounded-full bg-[#F3F3F3] px-3 py-2 text-small font-bold text-ink">
+          <button
+            type="button"
+            onClick={() => {
+              sound.tap();
+              onEdit();
+            }}
+            className="ui-press flex items-center gap-1 rounded-full bg-[#F3F3F3] px-3 py-2 text-small font-bold text-ink"
+          >
             <Icon name="edit" className="h-4 w-4" />
             Edit
           </button>
