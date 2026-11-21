@@ -47,6 +47,19 @@ export function buildMockRun(): MockStep[] {
     steps.push({ at, to, make: () => ({ type: "listing.tick", listing_id: id, price: mockPriceAt(at), seconds_left: TOTAL_SEC - at }) });
   }
 
+  // Social proof (round 2): grows with the run, like the DEMO_CROWD simulation.
+  for (let at = 0; at < SOLD_AT; at += PRICE_TICK_SEC) {
+    const share = Math.min(1, at / T_FLOOR_SEC);
+    const to: LiveRole[] = at >= PING_AT ? ["seller", "buyer"] : ["seller"];
+    steps.push({
+      at, to,
+      make: () => ({
+        type: "listing.stats", listing_id: id,
+        seen: Math.round(3 + share * 33), interested: Math.round(2 + share * 20), watching: 3 + ((at / PRICE_TICK_SEC) % 7),
+      }),
+    });
+  }
+
   // "Sent to N people nearby" grows as the price drops under more people's max price.
   for (const [at, reached] of [[30, 3], [120, 7], [240, 11], [PING_AT, 14]] as const) {
     steps.push({ at, to: ["seller"], make: () => ({ type: "listing.reach", listing_id: id, reached }) });

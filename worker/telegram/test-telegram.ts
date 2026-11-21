@@ -89,7 +89,7 @@ async function main() {
     const card: ListingCard = {
       listing_id: "lst_demo", restaurant_name: "Five Guys", restaurant_address: "x", photo_url: "x",
       title: "Fresh Five Guys combo, untouched", selling_line: "x", tags: ["burgers"], may_contain: [],
-      food_price: 17.78, price: 11.6, seconds_left: 14 * 60 + 5, status: "live", lock_until: null, walk_min: 6,
+      food_price: 17.78, price: 11.6, seconds_left: 14 * 60 + 5, status: "live", lock_until: null, walk_min: 6, items: [],
     };
     sent = [];
     const id = await sendTelegramPing(env, String(CHAT), card, "Why you got this: Burgers · 6 min walk · under your $12", "https://ctrlz-eats.stalerole.workers.dev/buy/lst_demo?t=tok_demo");

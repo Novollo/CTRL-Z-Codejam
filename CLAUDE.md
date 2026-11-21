@@ -6,6 +6,7 @@ Read these rules before you change anything. They apply to every track.
 - Read `docs/booklet.md` fully before you write code. It is the spec.
 - Your track, sections and folders are in booklet section 13.2.
 - Exact on-screen text in the booklet (words in quotes) must be used word for word.
+- Then read `docs/design-round-2.md`: the team's design feedback. **Where it disagrees with the booklet, it wins.**
 
 ## 2. The contract in /shared is frozen
 - `/shared` holds the contract: types, API paths, live messages, constants, design tokens, D1 schema, seed data and mocks.
@@ -23,7 +24,7 @@ Read these rules before you change anything. They apply to every track.
 | C. Market engine | `worker/market`, `worker/api` |
 | D. Integrations | `worker/agent`, `worker/stripe`, `worker/telegram` |
 
-Root files (`package.json`, `wrangler.jsonc`, `vite.config.ts`, `tsconfig*.json`, `web/tsconfig.json`, `worker/index.ts`, `worker/env.ts`, `worker/integrations.ts`, `web/src/main.tsx`, `web/src/App.tsx`, `web/src/lib/*`, `web/src/index.css`) belong to the lead. Need a new npm package or a route? Ask in `docs/contract-requests.md`.
+Root files (`package.json`, `wrangler.jsonc`, `vite.config.ts`, `tsconfig*.json`, `web/tsconfig.json`, `worker/index.ts`, `worker/env.ts`, `worker/integrations.ts`, `web/src/main.tsx`, `web/src/App.tsx`, `web/src/lib/*`, `web/src/ui/*` (shared mascot, sounds, confetti, motion classes), `web/src/index.css`) belong to the lead. Need a new npm package or a route? Ask in `docs/contract-requests.md`.
 
 ## 4. Keep it simple
 - Build **only** what the booklet describes. No extra features, screens, settings or abstractions.

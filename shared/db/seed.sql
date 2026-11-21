@@ -39,7 +39,7 @@ INSERT INTO walk_times (spot, restaurant_id, minutes) VALUES
 -- ready_at is set by /api/admin/reset (now + 4 min, scaled by DEMO_SPEED).
 INSERT INTO orders (id, restaurant_id, items, food_price, fees, total, type, status, ready_at, pickup_code) VALUES
   ('ord_4821', 'r_fiveguys',
-   '[{"name":"Little Cheeseburger","price":11.49},{"name":"Cajun Fries (regular)","price":6.29}]',
+   '[{"name":"Little Cheeseburger","price":11.49,"description":"One hand-formed beef patty, American cheese, pickles, grilled onions, ketchup and mustard on a toasted sesame bun."},{"name":"Cajun Fries (regular)","price":6.29,"description":"Fresh-cut Idaho potatoes, skin on, cooked in peanut oil and dusted with Cajun spice. Regular size."}]',
    17.78, '{"service_fee":2.99,"delivery_fee":0,"tax":2.69}', 23.46,
    'pickup', 'preparing', NULL, 'ZEE-4821');
 

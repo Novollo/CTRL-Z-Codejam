@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "../../shared/tokens.css";
+@import "./ui/ui.css";
 
 @source "../../shared";
 

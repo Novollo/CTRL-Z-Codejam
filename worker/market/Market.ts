@@ -688,6 +688,7 @@ export class Market extends DurableObject<Env> {
       tags: listing.tags,
       may_contain: listing.may_contain,
       food_price: order.food_price,
+      items: order.items,
       price: this.price(listing, now),
       seconds_left: this.secondsLeft(listing, now),
       status: listing.status === "locked" || listing.status === "free" ? listing.status : "live",

@@ -27,6 +27,8 @@ export interface WalkTime {
 export interface OrderItem {
   name: string;
   price: number;
+  /** What's in it, for the buyer (round 2): "Beef patty, American cheese, pickles…" */
+  description: string;
 }
 
 export interface OrderFees {
@@ -128,6 +130,7 @@ export interface ListingCard {
   tags: Tag[];
   may_contain: string[];    // shown as "May contain: …" chip
   food_price: number;       // struck-through original price
+  items: OrderItem[];       // what's in the order, with descriptions (round 2)
   price: number;            // live price now (0 during the free window)
   seconds_left: number;     // story seconds, ready to show
   status: "live" | "locked" | "free";

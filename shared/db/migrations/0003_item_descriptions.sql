@@ -1,0 +1,2 @@
+-- Round 2: buyers want to know what's in the order. Each item gets a description.
+UPDATE orders SET items = '[{"name":"Little Cheeseburger","price":11.49,"description":"One hand-formed beef patty, American cheese, pickles, grilled onions, ketchup and mustard on a toasted sesame bun."},{"name":"Cajun Fries (regular)","price":6.29,"description":"Fresh-cut Idaho potatoes, skin on, cooked in peanut oil and dusted with Cajun spice. Regular size."}]' WHERE id = 'ord_4821';

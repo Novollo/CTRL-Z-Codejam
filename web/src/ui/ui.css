@@ -1,0 +1,47 @@
+/* Shared motion for every screen (round 2). Owned by the lead. Use the classes, don't copy the keyframes. */
+
+@keyframes zee-bob { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-6px) } }
+@keyframes zee-bounce { 0%, 100% { transform: translateY(0) scale(1) } 40% { transform: translateY(-14px) scale(1.03, .97) } 60% { transform: translateY(0) scale(.97, 1.03) } }
+@keyframes zee-wiggle { 0%, 100% { transform: rotate(0) } 25% { transform: rotate(-6deg) } 75% { transform: rotate(6deg) } }
+@keyframes zee-stir { 0% { transform: rotate(-4deg) translateX(-2px) } 50% { transform: rotate(4deg) translateX(2px) } 100% { transform: rotate(-4deg) translateX(-2px) } }
+@keyframes zee-jump { 0%, 100% { transform: translateY(0) scale(1) } 30% { transform: translateY(-28px) scale(1.06) } 55% { transform: translateY(0) scale(1.08, .92) } 70% { transform: translateY(-8px) } }
+@keyframes zee-breathe { 0%, 100% { transform: scale(1) } 50% { transform: scale(1.04) } }
+
+@keyframes ui-pop-in { 0% { opacity: 0; transform: scale(.85) } 70% { opacity: 1; transform: scale(1.04) } 100% { transform: scale(1) } }
+@keyframes ui-slide-up { from { opacity: 0; transform: translateY(24px) } to { opacity: 1; transform: translateY(0) } }
+@keyframes ui-fade-in { from { opacity: 0 } to { opacity: 1 } }
+@keyframes ui-pulse-ring { 0% { box-shadow: 0 0 0 0 rgb(108 194 74 / .55) } 100% { box-shadow: 0 0 0 18px rgb(108 194 74 / 0) } }
+@keyframes ui-shimmer { from { background-position: -200% 0 } to { background-position: 200% 0 } }
+@keyframes ui-float-up { 0% { opacity: 0; transform: translateY(6px) } 20% { opacity: 1 } 100% { opacity: 0; transform: translateY(-28px) } }
+@keyframes ui-sparkle { 0%, 100% { opacity: 0; transform: scale(.4) rotate(0) } 50% { opacity: 1; transform: scale(1) rotate(45deg) } }
+@keyframes ui-price-drop { 0% { transform: translateY(-6px); color: var(--color-leaf) } 100% { transform: translateY(0) } }
+
+.zee-bob { animation: zee-bob 2.4s ease-in-out infinite }
+.zee-bounce { animation: zee-bounce 1.6s ease-in-out infinite }
+.zee-wiggle { animation: zee-wiggle 1.2s ease-in-out infinite }
+.zee-stir { animation: zee-stir .9s ease-in-out infinite; transform-origin: 50% 90% }
+.zee-jump { animation: zee-jump 1.1s cubic-bezier(.3, .7, .4, 1) infinite }
+.zee-breathe { animation: zee-breathe 3s ease-in-out infinite }
+
+.ui-pop-in { animation: ui-pop-in .45s cubic-bezier(.2, .9, .3, 1.2) both }
+.ui-slide-up { animation: ui-slide-up .45s cubic-bezier(.2, .8, .2, 1) both }
+.ui-fade-in { animation: ui-fade-in .4s ease-out both }
+.ui-pulse-ring { animation: ui-pulse-ring 1.6s ease-out infinite }
+.ui-float-up { animation: ui-float-up 1.4s ease-out both }
+.ui-sparkle { animation: ui-sparkle 1.4s ease-in-out infinite }
+.ui-price-drop { animation: ui-price-drop .5s ease-out }
+.ui-shimmer {
+  background: linear-gradient(90deg, transparent 0%, rgb(255 255 255 / .55) 50%, transparent 100%) var(--color-mint);
+  background-size: 200% 100%;
+  animation: ui-shimmer 1.6s linear infinite;
+}
+
+/* Stagger helpers: style={{ animationDelay: ... }} also works. */
+.ui-delay-1 { animation-delay: .08s }
+.ui-delay-2 { animation-delay: .16s }
+.ui-delay-3 { animation-delay: .24s }
+.ui-delay-4 { animation-delay: .32s }
+
+@media (prefers-reduced-motion: reduce) {
+  [class*="zee-"], [class*="ui-"] { animation-duration: .001s !important; animation-iteration-count: 1 !important }
+}

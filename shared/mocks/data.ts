@@ -10,6 +10,12 @@ export const MOCK_LISTING_ID = "lst_demo";
 export const MOCK_BUYER_ID = "b_demo";
 export const MOCK_BUYER_TOKEN = "tok_demo";
 
+/** Same text as shared/db/seed.sql and migration 0003. */
+export const ITEM_DESCRIPTIONS = {
+  burger: "One hand-formed beef patty, American cheese, pickles, grilled onions, ketchup and mustard on a toasted sesame bun.",
+  fries: "Fresh-cut Idaho potatoes, skin on, cooked in peanut oil and dusted with Cajun spice. Regular size.",
+} as const;
+
 export const MOCK_RESTAURANT: Restaurant = {
   id: DEMO_RESTAURANT_ID,
   name: "Five Guys",
@@ -26,8 +32,8 @@ export const MOCK_ORDER: Order = {
   id: DEMO_ORDER_ID,
   restaurant_id: DEMO_RESTAURANT_ID,
   items: [
-    { name: "Little Cheeseburger", price: 11.49 },
-    { name: "Cajun Fries (regular)", price: 6.29 },
+    { name: "Little Cheeseburger", price: 11.49, description: ITEM_DESCRIPTIONS.burger },
+    { name: "Cajun Fries (regular)", price: 6.29, description: ITEM_DESCRIPTIONS.fries },
   ],
   food_price: 17.78,
   fees: { service_fee: 2.99, delivery_fee: 0, tax: 2.69 },
@@ -91,6 +97,7 @@ export const mockListingCard = (price: number, seconds_left: number): ListingCar
   tags: MOCK_UNDO.tags,
   may_contain: MOCK_UNDO.may_contain,
   food_price: MOCK_ORDER.food_price,
+  items: MOCK_ORDER.items,
   price,
   seconds_left,
   status: "live",

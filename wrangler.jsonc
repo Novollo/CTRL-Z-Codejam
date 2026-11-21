@@ -33,7 +33,8 @@
   // Settings (not secrets). Secrets go in .dev.vars locally and `wrangler secret put` in Cloudflare.
   "vars": {
     "DEMO_SPEED": "7",
-    "AGENT_MODE": "live"
+    "AGENT_MODE": "live",
+    "DEMO_CROWD": "on"
   },
 
   "observability": { "enabled": true }

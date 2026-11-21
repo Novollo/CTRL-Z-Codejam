@@ -27,6 +27,22 @@ export interface ListingReachMsg {
   reached: number;
 }
 
+/**
+ * Seller + buyers with this card open (round 2). Social proof, sent on every tick.
+ * - seen: people who got the offer (pinged)            → seller "Seen by 23"
+ * - watching: people with the card open right now      → buyer card "8 people watching right now"
+ * - interested: people whose filters match this order  → seller "17 people want this"
+ * When DEMO_CROWD is "on", Market adds a simulated campus crowd (see DEMO_CROWD in constants.ts).
+ * listing.reach.reached uses the same `seen` number.
+ */
+export interface ListingStatsMsg {
+  type: "listing.stats";
+  listing_id: string;
+  seen: number;
+  watching: number;
+  interested: number;
+}
+
 /** One buyer. Opens the offer card (B3). */
 export interface PingMsg {
   type: "ping";
@@ -81,6 +97,7 @@ export type LiveMessage =
   | OrderStatusMsg
   | ListingTickMsg
   | ListingReachMsg
+  | ListingStatsMsg
   | PingMsg
   | ListingLockedMsg
   | ListingUnlockedMsg

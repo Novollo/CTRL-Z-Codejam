@@ -54,6 +54,15 @@ export const AGENT_DEFAULT_TEXT = {
 } as const;
 export type AgentMode = "live" | "default";
 
+// ---- Demo crowd (round 2) -------------------------------------------------
+/**
+ * With few real phones in the room, the counts look empty. When the Worker setting DEMO_CROWD = "on",
+ * Market adds a simulated campus crowd on top of the real counts. It grows smoothly from 0 at publish
+ * to the max values by the time the floor is reached; `watching` wobbles between min and max.
+ * Real counts are always added on top. Switch it off with DEMO_CROWD = "off".
+ */
+export const DEMO_CROWD = { seen_max: 36, interested_max: 22, watching_min: 3, watching_max: 9 } as const;
+
 // ---- Screens --------------------------------------------------------------
 /** B-lost card closes by itself after this many seconds. */
 export const LOST_CARD_CLOSE_SEC = 3;
