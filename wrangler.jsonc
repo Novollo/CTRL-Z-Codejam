@@ -1,0 +1,40 @@
+// Cloudflare Worker config. Owned by the lead (track 0).
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ctrlz-eats",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // The React app (built into web/dist) is served as static files.
+  // /api/* and /ws always go to the Worker first.
+  "assets": {
+    "directory": "web/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/ws"]
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "ctrlz-eats",
+      "database_id": "REPLACE_AFTER_wrangler_d1_create",
+      "migrations_dir": "shared/db/migrations"
+    }
+  ],
+
+  // Market: the one referee (booklet section 10).
+  "durable_objects": {
+    "bindings": [{ "name": "MARKET", "class_name": "Market" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Market"] }],
+
+  // Settings (not secrets). Secrets go in .dev.vars locally and `wrangler secret put` in Cloudflare.
+  "vars": {
+    "DEMO_SPEED": "7",
+    "AGENT_MODE": "live"
+  },
+
+  "observability": { "enabled": true }
+}

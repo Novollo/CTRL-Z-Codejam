@@ -1,0 +1,42 @@
+# Contract requests and open questions
+
+How this works (booklet 13.3.6): an agent that needs a change to `/shared` writes it here and **stops**. The lead decides.
+Format: `- [ ] [track X] what you need · why · date`.
+
+## Open requests
+
+_(none yet)_
+
+---
+
+## Lead decisions made while writing the contract (track 0)
+
+These fill gaps in the booklet. Any track may question them here.
+
+1. **Money is dollars** (`17.78`), not cents, to match the booklet and the agent JSON. Use `roundPrice` / `roundPriceDown` from `shared/constants.ts`.
+2. **Timestamps are epoch milliseconds**, real time. `seconds_left` in live messages is **story seconds** (already scaled by `DEMO_SPEED`), so screens just display it.
+3. **The price tick (10 s) is a story timer** and runs 7× faster like the others (about every 1.4 s real). Only the lock (60 s) is real time.
+4. **Extra API paths** the screens need (not in 10.4): `GET /api/orders/:id` (S1), `GET /api/buyers/:id` (reload keeps the profile), `GET /api/listings/:id` (B3 from a Telegram link), `GET /api/admin/state` and `POST /api/admin/agent-mode` (/admin), `GET /api/health`. Stub only: `GET /api/mock/pass`.
+5. **Buyer auth:** buyer calls send the token in the header `x-buyer-token`.
+6. **Pickup code privacy:** `listing.sold` carries `pass` (with the pickup code) **only** in the copy sent to the winning buyer and the seller. Everyone else gets the message without `pass`.
+7. **Buy response** is `{ kind: "locked", checkout_url, lock_until, price }` or, in the free window, `{ kind: "free", pass }`. A lost race is HTTP 409 `{ error: "taken", lock_until }`.
+8. **`listing.unlocked` also carries `price`**, so the card comes back to life at the current price (B-hold).
+9. **`listing.closed` has an `outcome`**: `pickup_self | free_window | free_expired | donated | stopped`. "Stop listing" uses `stopped`.
+10. **`fees` is JSON** `{ service_fee, delivery_fee, tax }`, because S1 shows each line.
+11. **`payments.paid_at`** was added (not in 10.3) to compute "Pick up by" = paid_at + 30 story min.
+12. **Fallback keys:** `pickup_self | free | donate`. Default `free`.
+13. **Floor range on S3** rounds inward: min = 30% rounded **up** to $0.10, max = 70% rounded **down**.
+14. **`/admin` page** lives in `web/src/stage/admin` (track B owns `web/src/stage`).
+15. **Stage buyer** in the seed: Sarah, Trottier, 10 min, Burgers, $12 (`b_demo` / token `tok_demo`).
+16. **Mock lock** in the replay lasts only ~6 s before "unlocked", so screens can be built fast. The real lock is 60 s.
+17. **Stub checkout:** the stub `POST /buy` returns `checkout_url: /join?mock_paid=<listingId>` until Stripe exists.
+
+## Open questions for the team
+
+- [ ] **Restaurant details:** real address and lat/lng of the Five Guys used on stage. The pizza and bowls restaurants are placeholders: keep, rename or replace?
+- [ ] **Walk times:** all 24 minutes in `shared/db/seed.sql` are guesses. Fill them in from a map (booklet 9.3).
+- [ ] **Photos and mascot files:** put restaurant photos in `web/public/img/restaurants/` (`five-guys.jpg`, `pizza.jpg`, `bowls.jpg`) and the 4 mascot poses in `web/public/mascot/` (`sitting.png`, `bag.png`, `thinking.png`, `jumping.png`).
+- [ ] **Where does AGENT_MODE live at runtime?** It is a Worker setting, which can't change without a redeploy. Suggestion: track C stores the /admin switch in the Market Durable Object, with `AGENT_MODE` as the starting value.
+- [ ] **"A buyer picks it up at 14:32" (S5a)** vs **"Pick up by 14:52" (B5)**: is the seller's time the pickup deadline or something else? The contract sends `pickup_by` only.
+- [ ] **B-lost example says $8.40, S5a says $9.40.** The mock run sells at $9.40 (40% of $23.46).
+- [ ] **Telegram bot name:** is `@CtrlZEatsBot` free?

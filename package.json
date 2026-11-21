@@ -1,0 +1,33 @@
+{
+  "name": "ctrlz-eats",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "npm run build && concurrently -k -n worker,web -c green,blue \"wrangler dev --port 8787\" \"vite\"",
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.json && tsc -p web/tsconfig.json",
+    "db:local": "wrangler d1 migrations apply ctrlz-eats --local && wrangler d1 execute ctrlz-eats --local --file shared/db/seed.sql",
+    "db:remote": "wrangler d1 migrations apply ctrlz-eats --remote && wrangler d1 execute ctrlz-eats --remote --file shared/db/seed.sql",
+    "deploy": "npm run build && wrangler deploy"
+  },
+  "dependencies": {
+    "hono": "^4.13.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261101.0",
+    "@tailwindcss/vite": "^4.3.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "concurrently": "^10.0.0",
+    "tailwindcss": "^4.3.0",
+    "typescript": "~5.9.3",
+    "vite": "^8.3.0",
+    "wrangler": "^4.161.0"
+  }
+}

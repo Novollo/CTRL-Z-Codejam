@@ -1,0 +1,13 @@
+@import "tailwindcss";
+@import "../../shared/tokens.css";
+
+@source "../../shared";
+
+html,
+body {
+  background: var(--color-white);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  -webkit-font-smoothing: antialiased;
+}

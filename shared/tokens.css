@@ -1,0 +1,30 @@
+/* Design tokens for Tailwind v4 (booklet 11.2, 11.3). Same values as tokens.ts.
+   Gives classes like: bg-forest text-leaf bg-mint text-ink text-stone border-line bg-amber,
+   font-sans (Inter) font-mono (JetBrains Mono), text-h1/h2/h3/body/small, rounded-card, h-bottom.
+   FROZEN: only the lead changes this file. */
+
+@theme {
+  --color-forest: #1E5631;
+  --color-leaf: #6CC24A;
+  --color-mint: #EEF7EA;
+  --color-ink: #111111;
+  --color-stone: #6B6B6B;
+  --color-line: #E8E8E8;
+  --color-white: #FFFFFF;
+  --color-amber: #F2A900;
+
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --text-h1: 28px;
+  --text-h1--font-weight: 700;
+  --text-h2: 22px;
+  --text-h2--font-weight: 700;
+  --text-h3: 18px;
+  --text-h3--font-weight: 700;
+  --text-body: 16px;
+  --text-small: 13px;
+
+  --radius-card: 12px;
+  --spacing-bottom: 56px;
+}
