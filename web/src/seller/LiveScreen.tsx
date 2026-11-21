@@ -8,6 +8,7 @@ import { FallbackPicker, FloorStepper, type FloorRange } from "./controls";
 import { CountUp } from "./CountUp";
 import { ClockIcon, TagIcon } from "./icons";
 import { ZeeFeed } from "./ZeeFeed";
+import { count } from "./plural";
 
 /** Short fallback names for the S4 control line ("If nobody buys: Give it free"). */
 const FALLBACK_SHORT: Record<Fallback, string> = {
@@ -88,7 +89,7 @@ export function LiveScreen({
         {live.stats ? (
           <div className="grid w-full grid-cols-3 gap-2">
             <StatPill emoji="👀" value={live.stats.seen} before="Seen by " after="" />
-            <StatPill emoji="🔥" value={live.stats.interested} before="" after=" want it" />
+            <StatPill emoji="🔥" value={live.stats.interested} before="" after={live.stats.interested === 1 ? " wants it" : " want it"} />
             <StatPill emoji="⚡" value={live.stats.watching} before="" after=" watching now" />
           </div>
         ) : (
@@ -99,7 +100,7 @@ export function LiveScreen({
                 <div key={k} className="ui-shimmer h-[58px] rounded-card" />
               ))}
             </div>
-            {seen > 0 && <p className="ui-fade-in mt-2 text-center text-body font-semibold text-forest">Sent to {seen} people nearby</p>}
+            {seen > 0 && <p className="ui-fade-in mt-2 text-center text-body font-semibold text-forest">Sent to {count(seen, "person", "people")} nearby</p>}
           </div>
         )}
 

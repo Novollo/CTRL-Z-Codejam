@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { CAMPUS_SPOTS } from "@shared/catalog";
 import { formatPrice } from "@shared/constants";
 import { Mascot } from "../ui";
+import { count } from "./plural";
 import type { LiveState } from "./LiveScreen";
 
 type Tone = "normal" | "alert" | "good";
@@ -64,14 +65,14 @@ export function ZeeFeed({ live, restaurant, food }: { live: LiveState; restauran
         () => {
           if (seen < m.seen + 3 && !(m.seen === 0 && seen > 0)) return null;
           m.seen = seen;
-          return `Shared your order with ${seen} students near campus`;
+          return `Shared your order with ${count(seen, "student", "students")} near campus`;
         },
         () => {
           if (l.price > m.priceLine - 1) return null;
           const more = interested - m.interested;
           m.priceLine = l.price;
           m.interested = interested;
-          return more > 0 ? `Price dropped to ${formatPrice(l.price)}, ${more} more people can afford it now` : `Price dropped to ${formatPrice(l.price)}`;
+          return more > 0 ? `Price dropped to ${formatPrice(l.price)}, ${count(more, "more person", "more people")} can afford it now` : `Price dropped to ${formatPrice(l.price)}`;
         },
         () => {
           const up = watching > m.watching;
