@@ -39,7 +39,7 @@ export function ConfirmSheet({
         <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-line" />
         <div className="flex-1 space-y-6 overflow-y-auto px-5 pt-4 pb-4">
           {/* 1. Listing preview card */}
-          <section className="ui-slide-up ui-delay-1 rounded-card border border-line p-4">
+          <section className="ui-flow-in ui-delay-1 rounded-card border border-line p-4">
             <div className="flex items-center gap-3">
               {logoUrl && (
                 <span className="flex h-11 w-16 shrink-0 items-center justify-center rounded-card border border-line bg-white p-1">
@@ -66,7 +66,7 @@ export function ConfirmSheet({
           </section>
 
           {/* 2. Price plan */}
-          <section className="ui-slide-up ui-delay-2">
+          <section className="ui-flow-in ui-delay-2">
             <p className="text-body text-ink">
               Starts at <span className="font-mono font-bold">{formatPrice(sheet.start_price)}</span>
             </p>
@@ -84,7 +84,7 @@ export function ConfirmSheet({
           </section>
 
           {/* 3. If nobody buys it */}
-          <section className="ui-slide-up ui-delay-3">
+          <section className="ui-flow-in ui-delay-3">
             <h3 className="mb-3 text-h3 text-ink">If nobody buys it:</h3>
             <FallbackPicker value={fallback} onChange={setFallback} />
           </section>
@@ -107,12 +107,12 @@ export function ConfirmSheet({
               haptic.light();
               onList(floor, fallback);
             }}
-            className="flex h-bottom w-full items-center justify-center gap-2 rounded-card bg-forest text-h3 text-white shadow-lg shadow-forest/25 active:scale-[0.98] disabled:opacity-60"
+            className="ui-press flex h-bottom w-full items-center justify-center gap-2 rounded-card bg-forest text-h3 text-white shadow-lg shadow-forest/25 disabled:opacity-60"
           >
             List it
             <ArrowRightIcon size={20} />
           </button>
-          <button onClick={onNeverMind} className="mt-3 w-full text-center text-small text-stone underline">
+          <button onClick={() => { sound.tap(); onNeverMind(); }} className="ui-press mx-auto mt-3 block rounded-full px-3 py-1 text-center text-small text-stone underline">
             Never mind, keep my order
           </button>
         </div>

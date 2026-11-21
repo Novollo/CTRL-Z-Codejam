@@ -4,7 +4,7 @@ import { formatPrice } from "@shared/constants";
 import type { OrderResponse } from "@shared/api";
 import type { OrderStatus } from "@shared/types";
 import { CheckIcon, StoreIcon, UndoIcon } from "./icons";
-import { Mascot } from "../ui";
+import { Doodles, Mascot } from "../ui";
 
 const STEPS: { status: OrderStatus; label: string }[] = [
   { status: "received", label: "Order received" },
@@ -38,7 +38,7 @@ export function OrderScreen({ data, status, onUndo }: { data: OrderResponse; sta
 
           <div className="mt-4 border-t border-line pt-2">
             {order.items.map((item, i) => (
-              <div key={item.name} className={`ui-slide-up ui-delay-${i + 1} py-1.5`}>
+              <div key={item.name} className={`ui-flow-in ui-delay-${i + 1} py-1.5`}>
                 <Row label={item.name} value={formatPrice(item.price)} strong />
                 {item.description && <p className="pr-16 text-small leading-snug text-stone">{item.description}</p>}
               </div>
@@ -61,11 +61,11 @@ export function OrderScreen({ data, status, onUndo }: { data: OrderResponse; sta
         {status === "preparing" && (
           <button
             onClick={onUndo}
-            className="ui-pop-in flex h-bottom w-full items-center justify-center gap-2 rounded-card bg-forest text-h3 text-white shadow-lg shadow-forest/25 transition-transform active:scale-[0.98]"
+            className="ui-pop-in ui-press flex h-bottom w-full items-center justify-center gap-2 rounded-card bg-forest text-h3 text-white shadow-lg shadow-forest/25"
           >
             <UndoIcon size={22} />
             Ctrl+Z this order
-            <span className="ml-1 overflow-hidden rounded-full bg-white">
+            <span className="ml-1 flex h-10 w-10 items-center justify-center rounded-full bg-white">
               <Mascot pose="waving" motion="none" size={32} />
             </span>
           </button>
@@ -79,8 +79,9 @@ export function OrderScreen({ data, status, onUndo }: { data: OrderResponse; sta
 function LogoHeader({ src, name }: { src: string; name: string }) {
   const [missing, setMissing] = useState(!src);
   return (
-    <div className="flex h-32 w-full items-center justify-center bg-mint">
-      <div className="ui-pop-in flex h-24 w-44 items-center justify-center rounded-card bg-white p-3 shadow-sm">
+    <div className="relative flex h-32 w-full items-center justify-center overflow-hidden bg-mint">
+      <Doodles variant="food" tone="forest" opacity={0.07} size={200} />
+      <div className="ui-pop-in relative flex h-24 w-44 items-center justify-center rounded-card bg-white p-3 shadow-sm">
         {missing ? (
           <StoreIcon size={44} className="text-forest" />
         ) : (

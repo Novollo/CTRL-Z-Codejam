@@ -2,11 +2,11 @@
 // when done. When the agent has answered, a 4th line "Your listing is ready!" and a "See my listing →"
 // button appear. The seller taps it to open S3 (no automatic jump).
 import { useEffect, useState } from "react";
-import { Mascot, haptic, sound } from "../ui";
+import { Doodles, Mascot, haptic, sound } from "../ui";
 import { CheckIcon } from "./icons";
 
 const LINES = ["Reading your order…", "Checking who's hungry nearby…", "Cooking up your listing…"];
-export const AGENT_LINE_MS = 1600;
+export const AGENT_LINE_MS = 2200;
 
 export function AgentScreen({ ready, onSee }: { ready: boolean; onSee: () => void }) {
   // step 1..3 = that many lines shown; step 4 = the last line has had its time.
@@ -20,20 +20,19 @@ export function AgentScreen({ ready, onSee }: { ready: boolean; onSee: () => voi
   }, [step]);
 
   useEffect(() => {
-    if (!done) return;
-    sound.success();
-    haptic.success();
+    if (done) haptic.success(); // no sound here: sounds only on real button presses and big moments (round 3)
   }, [done]);
 
   const shown = Math.min(step, LINES.length);
 
   return (
-    <div className="flex h-full flex-col bg-mint">
-      <div className="flex flex-1 flex-col items-center justify-center px-8">
+    <div className="relative flex h-full flex-col overflow-hidden bg-mint">
+      <Doodles variant="food" tone="forest" opacity={0.08} />
+      <div className="relative flex flex-1 flex-col items-center justify-center px-8">
         {done ? (
           <Mascot key="done" pose="thumbsup" motion="bounce" sparkles size={180} />
         ) : (
-          <Mascot key="work" cycle={["thinking", "pointing"]} cycleMs={1600} motion="stir" size={180} />
+          <Mascot key="work" cycle={["thinking", "pointing"]} cycleMs={2200} motion="stir" size={180} />
         )}
 
         <ul className="mt-10 w-full max-w-[330px] space-y-4">
@@ -57,14 +56,14 @@ export function AgentScreen({ ready, onSee }: { ready: boolean; onSee: () => voi
         </ul>
       </div>
 
-      <div className="h-[104px] px-5 pb-8">
+      <div className="relative h-[104px] px-5 pb-8">
         {done && (
           <button
             onClick={() => {
               sound.tap();
               onSee();
             }}
-            className="ui-pop-in flex h-bottom w-full items-center justify-center gap-2 rounded-card bg-forest text-h3 text-white shadow-lg shadow-forest/25 active:scale-[0.98]"
+            className="ui-pop-in ui-press flex h-bottom w-full items-center justify-center gap-2 rounded-card bg-forest text-h3 text-white shadow-lg shadow-forest/25"
           >
             See my listing →
           </button>

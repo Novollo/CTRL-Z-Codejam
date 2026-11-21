@@ -1,6 +1,7 @@
 // Controls shared by S3 (confirm sheet) and S4 (listed): the floor − / + and the fallback choice.
 import { FALLBACKS, type Fallback } from "@shared/catalog";
 import { formatPrice, roundPrice } from "@shared/constants";
+import { sound } from "../ui";
 import { CheckIcon, MinusIcon, PlusIcon } from "./icons";
 
 export interface FloorRange {
@@ -32,8 +33,11 @@ function StepButton({ label, disabled, onClick, children }: { label: string; dis
     <button
       aria-label={label}
       disabled={disabled}
-      onClick={onClick}
-      className="flex h-10 w-10 items-center justify-center rounded-full border border-line text-ink disabled:text-line"
+      onClick={() => {
+        sound.tap();
+        onClick();
+      }}
+      className="ui-press flex h-10 w-10 items-center justify-center rounded-full border border-line text-ink disabled:text-line"
     >
       {children}
     </button>
@@ -48,8 +52,11 @@ export function FallbackPicker({ value, onChange }: { value: Fallback; onChange:
         return (
           <button
             key={f.key}
-            onClick={() => onChange(f.key)}
-            className={`flex w-full items-center justify-between rounded-card border px-4 py-3 text-left text-body ${
+            onClick={() => {
+              sound.tap();
+              onChange(f.key);
+            }}
+            className={`ui-press flex w-full items-center justify-between rounded-card border px-4 py-3 text-left text-body ${
               on ? "border-forest bg-mint font-semibold text-forest" : "border-line text-ink"
             }`}
           >
