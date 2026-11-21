@@ -134,7 +134,7 @@ export interface ListingCard {
   walk_min: number | null;  // from this buyer's spot
 }
 
-/** The pickup pass (B5). Only sent to the winning buyer and the seller. */
+/** The pickup pass (B5). Only ever sent to the winning buyer: never to the seller or other buyers. */
 export interface PickupPass {
   listing_id: string;
   restaurant_name: string;

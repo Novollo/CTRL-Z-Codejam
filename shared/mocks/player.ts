@@ -8,7 +8,7 @@
 
 import { DEFAULT_DEMO_SPEED, LISTING_AFTER_READY_MIN, LOCK_SEC, PICKUP_DEADLINE_MIN, PRICE_TICK_SEC, T_FLOOR_MIN, roundPriceDown } from "../constants";
 import type { LiveMessage, LiveRole } from "../messages";
-import { MOCK_LISTING_ID, MOCK_ORDER, MOCK_REASON, MOCK_UNDO, mockListingCard, mockPickupPass } from "./data";
+import { MOCK_LISTING_ID, MOCK_ORDER, MOCK_REASON, MOCK_UNDO, mockListingCard } from "./data";
 
 /** One scripted step. `at` is in story seconds after the listing opened. */
 export interface MockStep {
@@ -64,16 +64,12 @@ export function buildMockRun(): MockStep[] {
   steps.push({ at: UNLOCK1_AT, to: ["seller", "buyer"], make: () => ({ type: "listing.unlocked", listing_id: id, lock_until: null, price: mockPriceAt(UNLOCK1_AT) }) });
   steps.push({ at: LOCK2_AT, to: ["seller", "buyer"], make: ({ now }) => ({ type: "listing.locked", listing_id: id, lock_until: now + LOCK_SEC * 1000 }) });
 
-  // Sold. The seller gets the pass; this mock buyer is NOT the winner, so they see B-lost.
+  // Sold. Only the winning buyer gets the pass (pickup code). The seller gets price + time only.
+  // This mock buyer is NOT the winner, so they see B-lost. Test B5 with GET /api/mock/pass.
   const pickupBy = (now: number, speed: number) => now + (PICKUP_DEADLINE_MIN * 60 * 1000) / speed;
   steps.push({
     at: SOLD_AT,
-    to: ["seller"],
-    make: ({ now, speed }) => ({ type: "listing.sold", listing_id: id, sold_price: LOCK_PRICE, pickup_by: pickupBy(now, speed), pass: mockPickupPass(pickupBy(now, speed)) }),
-  });
-  steps.push({
-    at: SOLD_AT,
-    to: ["buyer"],
+    to: ["seller", "buyer"],
     make: ({ now, speed }) => ({ type: "listing.sold", listing_id: id, sold_price: LOCK_PRICE, pickup_by: pickupBy(now, speed) }),
   });
 

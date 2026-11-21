@@ -1,5 +1,5 @@
 # Copy of .dev.vars WITHOUT values. Safe to commit. The real .dev.vars is git-ignored.
-ANTHROPIC_API_KEY=
+OPENAI_API_KEY=
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
 TELEGRAM_BOT_TOKEN=

@@ -49,7 +49,8 @@ export interface ListingUnlockedMsg {
   price: number;
 }
 
-/** Everyone with the card + seller. `pass` is only filled for the winning buyer and the seller. */
+/** Everyone with the card + seller. `pass` (with the pickup code) is ONLY filled in the copy sent to the winning buyer.
+ *  The seller never gets the buyer's pickup code; S5a uses `sold_price` and `pickup_by`. */
 export interface ListingSoldMsg {
   type: "listing.sold";
   listing_id: string;

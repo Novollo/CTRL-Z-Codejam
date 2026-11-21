@@ -3,7 +3,7 @@
 import { readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 
-const NAMES = ["ANTHROPIC_API_KEY", "STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "TELEGRAM_BOT_TOKEN"];
+const NAMES = ["OPENAI_API_KEY", "STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "TELEGRAM_BOT_TOKEN"];
 
 let text = "";
 try {

@@ -7,7 +7,7 @@ export interface Env {
   DEMO_SPEED: string; // "7"
   AGENT_MODE: string; // "live" | "default"
   // Secrets (.dev.vars locally, `wrangler secret put` on Cloudflare). May be empty until set.
-  ANTHROPIC_API_KEY?: string;
+  OPENAI_API_KEY?: string;
   STRIPE_SECRET_KEY?: string;
   STRIPE_WEBHOOK_SECRET?: string;
   TELEGRAM_BOT_TOKEN?: string;

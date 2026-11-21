@@ -115,7 +115,7 @@ A bottom sheet with 4 parts and 1 button:
 - Mascot in the "jumping" pose with sparkles.
 - "Sold!" and below it "You got $9.40 back."
 - Green line: "You undid 40% of your mistake." (money back ÷ order total, rounded.)
-- Grey line: "A buyer picks it up at 14:32. Nothing else to do."
+- Grey line: "A buyer picks it up at 14:32. Nothing else to do." (The seller never sees the buyer's pickup code. Only the winning buyer gets it.)
 - Demo note: the money back is simulated. Only the buyer's payment runs through Stripe test mode.
 
 ### S5b. Not sold (time is up)
@@ -215,7 +215,7 @@ The "Buy now" button is a link to the website: `/buy/<listingId>?t=<buyerToken>`
 
 There is one AI call per listing, made when the seller taps Ctrl+Z. The agent **only suggests**. Plain code checks every suggestion against hard limits before anybody sees it. If the call is slow or broken, defaults are used, and nobody on stage sees a failure.
 
-**Model:** Claude Haiku 5.5 (`claude-haiku-5-5`) through the Claude API, because it answers fast. Temperature 0. The answer must be JSON only.
+**Model:** OpenAI `gpt-5.4-mini` through the OpenAI API (JSON mode), because it answers fast (about 2 s in testing). The answer must be JSON only. *(Lead decision, Nov 21: changed from Claude Haiku to OpenAI.)*
 
 ### 8.1 The three jobs
 
@@ -377,11 +377,11 @@ Screens send actions to the Worker over HTTP. Market pushes every price tick, pi
 | API | Cloudflare Worker (router: Hono) | All HTTP endpoints, Stripe and Telegram webhooks |
 | Live state | Durable Object `Market` (WebSockets + alarms) | Price ticks, matching, pings, lock, timers |
 | Database | Cloudflare D1 (SQLite) | Orders, listings, buyers, pings, payments, restaurants |
-| Agent | Claude API, `claude-haiku-5-5` | Section 8 |
+| Agent | OpenAI API, `gpt-5.4-mini` | Section 8 |
 | Payment | Stripe Checkout, test mode | Buyer payment (B4) |
 | Push | Telegram Bot API (webhook) | Pings when the website is closed |
 
-Secrets (Worker settings, never in code): `ANTHROPIC_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `TELEGRAM_BOT_TOKEN`. Settings: `DEMO_SPEED`, `AGENT_MODE`.
+Secrets (Worker settings, never in code): `OPENAI_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `TELEGRAM_BOT_TOKEN`. Settings: `DEMO_SPEED`, `AGENT_MODE`.
 
 ### 10.2 Pages (routes)
 
@@ -590,7 +590,7 @@ Done means: [the "Done when" line from 13.2].
 | Mascot name and pickup code prefix | Zee, "ZEE-" |
 | Campus spots and walk times | Team fills the table by hand from a map |
 | Floor price steps | $0.50 on S3 and S4 |
-| Stack | React + Vite + Tailwind, Hono on a Cloudflare Worker, D1, one Durable Object, Claude Haiku 5.5 |
+| Stack | React + Vite + Tailwind, Hono on a Cloudflare Worker, D1, one Durable Object, OpenAI gpt-5.4-mini |
 
 ### 14.2 Open points
 

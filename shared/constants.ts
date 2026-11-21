@@ -41,7 +41,9 @@ export const WALK_DETOUR_FACTOR = 1.3;
 export const WALK_METRES_PER_MIN = 80;
 
 // ---- Agent (booklet 8) ----------------------------------------------------
-export const AGENT_MODEL = "claude-haiku-5-5";
+/** OpenAI model for the seller agent (lead decision 2026-11-21; tested: ~2 s for a small JSON answer).
+ *  Faster fallback if needed: "gpt-5.4-nano" (~1 s). Key: OPENAI_API_KEY. */
+export const AGENT_MODEL = "gpt-5.4-mini";
 export const AGENT_TIMEOUT_MS = 5000;
 export const AGENT_TEXT_MAX = { title: 40, selling_line: 100, reason: 90 } as const;
 export const AGENT_BANNED_WORDS = ["safe", "allergen-free", "healthy"] as const;

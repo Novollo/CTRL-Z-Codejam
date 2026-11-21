@@ -32,7 +32,7 @@ Root files (`package.json`, `wrangler.jsonc`, `vite.config.ts`, `tsconfig*.json`
 
 ## 5. Secrets
 - Never put a key in a file that goes to GitHub. Keys live in `.dev.vars` (local, git-ignored) and in Cloudflare secrets.
-- Secret names: `ANTHROPIC_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `TELEGRAM_BOT_TOKEN`.
+- Secret names: `OPENAI_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `TELEGRAM_BOT_TOKEN`.
 
 ## 6. Units (do not mix them up)
 - Money: dollars as a number, e.g. `17.78`. Round with the helpers in `shared/constants.ts`.
