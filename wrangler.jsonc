@@ -19,7 +19,7 @@
     {
       "binding": "DB",
       "database_name": "ctrlz-eats",
-      "database_id": "REPLACE_AFTER_wrangler_d1_create",
+      "database_id": "aeaf307d-ed21-42f9-9df8-9c7442a21729",
       "migrations_dir": "shared/db/migrations"
     }
   ],
