@@ -16,7 +16,7 @@ These fill gaps in the booklet. Any track may question them here.
 1. **Money is dollars** (`17.78`), not cents, to match the booklet and the agent JSON. Use `roundPrice` / `roundPriceDown` from `shared/constants.ts`.
 2. **Timestamps are epoch milliseconds**, real time. `seconds_left` in live messages is **story seconds** (already scaled by `DEMO_SPEED`), so screens just display it.
 3. **The price tick (10 s) is a story timer** and runs 7× faster like the others (about every 1.4 s real). Only the lock (60 s) is real time.
-4. **Extra API paths** the screens need (not in 10.4): `GET /api/orders/:id` (S1), `GET /api/buyers/:id` (reload keeps the profile), `GET /api/listings/:id` (B3 from a Telegram link), `GET /api/admin/state` and `POST /api/admin/agent-mode` (/admin), `GET /api/health`. Stub only: `GET /api/mock/pass`.
+4. **Extra API paths** the screens need (not in 10.4): `GET /api/orders/:id` (S1), `GET /api/buyers/:id` (reload keeps the profile), `GET /api/listings/:id` (B3 from a Telegram link), `GET /api/admin/state` and `POST /api/admin/agent-mode` (/admin), `GET /api/health`, `GET /api/listings/:id/pass` (B5 after coming back from Stripe).
 5. **Buyer auth:** buyer calls send the token in the header `x-buyer-token`.
 6. **Pickup code privacy (lead decision, updated Nov 21):** `listing.sold` carries `pass` (with the pickup code) **only** in the copy sent to the **winning buyer**. The seller and everyone else get it without `pass`. (The seller still sees their own order's code in S5b "I'll pick it up", via `listing.closed.pickup_code`.)
 7. **Buy response** is `{ kind: "locked", checkout_url, lock_until, price }` or, in the free window, `{ kind: "free", pass }`. A lost race is HTTP 409 `{ error: "taken", lock_until }`.
@@ -29,8 +29,12 @@ These fill gaps in the booklet. Any track may question them here.
 14. **`/admin` page** lives in `web/src/stage/admin` (track B owns `web/src/stage`).
 15. **Stage buyer** in the seed: Sarah, Trottier, 10 min, Burgers, $12 (`b_demo` / token `tok_demo`).
 16. **Mock lock** in the replay lasts only ~6 s before "unlocked", so screens can be built fast. The real lock is 60 s.
-17. **Stub checkout:** the stub `POST /buy` returns `checkout_url: /join?mock_paid=<listingId>` until Stripe exists.
+17. **Stripe return pages:** success_url = `PAGE.paid(id)` = `/join?paid=<listingId>`, cancel_url = `/join`. The buyer page then loads `GET /api/listings/:id/pass`. The stub `POST /buy` returns `checkout_url = PAGE.paid(id)` until Stripe exists.
 18. **Agent provider (lead decision, Nov 21):** OpenAI instead of Claude. Model `gpt-5.4-mini` (`AGENT_MODEL`), JSON mode, secret `OPENAI_API_KEY`. Booklet section 8 updated. The hard limits and defaults (8.5, 8.6) are unchanged.
+
+19. **C ↔ D functions** are fixed in `worker/integrations.ts`: D exports `runSellerAgent`, `createCheckout`, `parseStripeWebhook`, `handleTelegramUpdate`, `sendTelegramPing`, `editTelegramPing`; C exports `notifyBuyerChanged`. The routes `/api/stripe/webhook` and `/api/telegram/webhook` live in C's `worker/api` and call D's functions.
+20. **`pings.telegram_message_id`** added (migration 0002) so the bot can edit the ping to "Gone — grabbed at $X".
+21. **Late payment:** Stripe Checkout cannot expire in 60 s. If a payment arrives after the lock ended and someone else bought it, Market ignores it (demo; refund is out of scope).
 
 ## Open questions for the team
 

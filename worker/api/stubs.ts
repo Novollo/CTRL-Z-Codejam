@@ -3,10 +3,11 @@
 
 import { Hono } from "hono";
 import type {
-  AdminStateResponse, BuyResponse, CreateBuyerResponse, HealthResponse, ListingCardResponse,
+  AdminStateResponse, BuyResponse, PassResponse, CreateBuyerResponse, HealthResponse, ListingCardResponse,
   ListingPatchRequest, ListingPatchResponse, OkResponse, OrderResponse, PublishRequest, PublishResponse,
   StopResponse, UndoResponse, BuyerProfile,
 } from "@shared/api";
+import { PAGE } from "@shared/api";
 import { DEFAULT_DEMO_SPEED, LISTING_AFTER_READY_MIN, LOCK_SEC, PICKUP_DEADLINE_MIN } from "@shared/constants";
 import type { AgentMode } from "@shared/constants";
 import {
@@ -46,7 +47,7 @@ api.post("/listings/:id/publish", async (c) => {
     status: "live",
     price: MOCK_UNDO.start_price,
     opens_at: now,
-    closes_at: now + (storyTotalSec * 1000) / speed(c.env),
+    closes_at: Math.round(now + (storyTotalSec * 1000) / speed(c.env)),
     seconds_left: storyTotalSec,
   });
 });
@@ -71,12 +72,12 @@ api.get("/listings/:id", (c) =>
   c.json<ListingCardResponse>({ listing: mockListingCard(11.6, 14 * 60 + 5), reason: MOCK_REASON }),
 );
 
-// The stub always wins the lock. "Checkout" goes back to /join with ?mock_paid=<listingId> (no real Stripe yet).
+// The stub always wins the lock. "Checkout" goes straight to the paid page (no real Stripe yet).
 api.post("/listings/:id/buy", (c) => {
   const id = c.req.param("id");
   return c.json<BuyResponse>({
     kind: "locked",
-    checkout_url: `/join?mock_paid=${encodeURIComponent(id)}`,
+    checkout_url: PAGE.paid(id),
     lock_until: Date.now() + LOCK_SEC * 1000,
     price: 11.6,
   });
@@ -102,9 +103,9 @@ api.get("/admin/state", (c) =>
 );
 api.post("/admin/agent-mode", (c) => c.json(ok));
 
-// Handy for building B5 without the live run: GET /api/mock/pass
-api.get("/mock/pass", (c) =>
-  c.json(mockPickupPass(Date.now() + (PICKUP_DEADLINE_MIN * 60 * 1000) / speed(c.env))),
+// B5 pickup pass for the winning buyer.
+api.get("/listings/:id/pass", (c) =>
+  c.json<PassResponse>(mockPickupPass(Math.round(Date.now() + (PICKUP_DEADLINE_MIN * 60 * 1000) / speed(c.env)))),
 );
 
 api.all("*", (c) => c.json({ error: "not found" }, 404));

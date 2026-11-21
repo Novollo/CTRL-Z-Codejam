@@ -101,6 +101,7 @@ export interface Ping {
   reason: string;           // "Why you got this: Burgers · 6 min walk · under your $12"
   sent_at: number;          // epoch ms
   dismissed: boolean;       // INTEGER 0/1. "Not now"
+  telegram_message_id: number | null; // to edit the message to "Gone — grabbed" (migration 0002)
 }
 
 export type PaymentStatus = "pending" | "paid" | "expired";

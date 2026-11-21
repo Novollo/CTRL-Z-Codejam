@@ -9,6 +9,13 @@ import type { AgentSource, Buyer, ListingCard, Order, OrderType, PickupPass, Res
 /** Buyer calls send their token in this header (saved in the browser by POST /api/buyers). */
 export const BUYER_TOKEN_HEADER = "x-buyer-token";
 
+/** Web pages the server sends people to. Stripe success_url = PAGE.paid(id), cancel_url = PAGE.join. */
+export const PAGE = {
+  join: "/join",
+  paid: (listingId: string) => `/join?paid=${encodeURIComponent(listingId)}`,
+  buy: (listingId: string, buyerToken: string) => `/buy/${encodeURIComponent(listingId)}?t=${encodeURIComponent(buyerToken)}`,
+} as const;
+
 /** Paths. Use these builders, never hand-written strings. */
 export const API = {
   // From booklet 10.4
@@ -20,6 +27,7 @@ export const API = {
   buyer: (buyerId: string) => `/api/buyers/${buyerId}`,               // PATCH | GET (lead addition)
   buy: (listingId: string) => `/api/listings/${listingId}/buy`,       // POST
   dismiss: (listingId: string) => `/api/listings/${listingId}/dismiss`, // POST
+  pass: (listingId: string) => `/api/listings/${listingId}/pass`,      // GET (lead addition: B5 after the Stripe redirect)
   stripeWebhook: () => `/api/stripe/webhook`,                         // POST (Stripe calls it)
   telegramWebhook: () => `/api/telegram/webhook`,                     // POST (Telegram calls it)
   adminReset: () => `/api/admin/reset`,                               // POST
@@ -137,6 +145,9 @@ export interface BuyTakenResponse {
   error: "taken";
   lock_until: number | null;
 }
+
+/** GET /api/listings/:id/pass (with token header) → B5. 404 unless this buyer won the listing. */
+export type PassResponse = PickupPass;
 
 /** POST /api/listings/:id/dismiss ("Not now") */
 export interface OkResponse {

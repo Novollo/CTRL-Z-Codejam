@@ -1,13 +1,13 @@
 // Worker entry. Owned by the lead.
-// - /api/*  → HTTP API (today: stubs with mock data in worker/api/stubs.ts; track C replaces them)
+// - /api/*  → HTTP API from worker/api (today: stubs with mock data; track C replaces them)
 // - /ws     → live connection, handed to the one Market Durable Object
 // - else    → the React app (static files in web/dist, served by Cloudflare assets)
 
 import { Hono } from "hono";
 import type { Env } from "./env";
-import { api } from "./api/stubs";
+import { api } from "./api";
 
-export { Market } from "./market/Market";
+export { Market } from "./market";
 
 const app = new Hono<{ Bindings: Env }>();
 

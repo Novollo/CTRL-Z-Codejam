@@ -2,6 +2,7 @@
 // FROZEN: only the lead changes /shared (see CLAUDE.md and docs/contract-requests.md).
 
 export * from "./catalog";
+export * from "./agent";
 export * from "./constants";
 export * from "./types";
 export * from "./api";

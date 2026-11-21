@@ -12,6 +12,7 @@ Read these rules before you change anything. They apply to every track.
 - **Never change anything in `/shared` unless you are the lead (track 0).**
 - Need a change? Write it in `docs/contract-requests.md` (what, why, which track) and **stop**. The lead decides.
 - Import from `@shared/...`. Do not copy contract types into your own folder or rename fields.
+- Tracks C and D call each other only through the functions in `worker/integrations.ts`. Export them with exactly those names and types.
 
 ## 3. Only touch your own folders
 | Track | You may change |
@@ -22,7 +23,7 @@ Read these rules before you change anything. They apply to every track.
 | C. Market engine | `worker/market`, `worker/api` |
 | D. Integrations | `worker/agent`, `worker/stripe`, `worker/telegram` |
 
-Root files (`package.json`, `wrangler.jsonc`, `vite.config.ts`, `tsconfig*.json`, `web/tsconfig.json`, `worker/index.ts`, `worker/env.ts`, `web/src/main.tsx`, `web/src/App.tsx`, `web/src/lib/*`, `web/src/index.css`) belong to the lead. Need a new npm package or a route? Ask in `docs/contract-requests.md`.
+Root files (`package.json`, `wrangler.jsonc`, `vite.config.ts`, `tsconfig*.json`, `web/tsconfig.json`, `worker/index.ts`, `worker/env.ts`, `worker/integrations.ts`, `web/src/main.tsx`, `web/src/App.tsx`, `web/src/lib/*`, `web/src/index.css`) belong to the lead. Need a new npm package or a route? Ask in `docs/contract-requests.md`.
 
 ## 4. Keep it simple
 - Build **only** what the booklet describes. No extra features, screens, settings or abstractions.

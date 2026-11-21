@@ -65,8 +65,8 @@ export function buildMockRun(): MockStep[] {
   steps.push({ at: LOCK2_AT, to: ["seller", "buyer"], make: ({ now }) => ({ type: "listing.locked", listing_id: id, lock_until: now + LOCK_SEC * 1000 }) });
 
   // Sold. Only the winning buyer gets the pass (pickup code). The seller gets price + time only.
-  // This mock buyer is NOT the winner, so they see B-lost. Test B5 with GET /api/mock/pass.
-  const pickupBy = (now: number, speed: number) => now + (PICKUP_DEADLINE_MIN * 60 * 1000) / speed;
+  // This mock buyer is NOT the winner, so they see B-lost. Test B5 with GET /api/listings/lst_demo/pass.
+  const pickupBy = (now: number, speed: number) => Math.round(now + (PICKUP_DEADLINE_MIN * 60 * 1000) / speed);
   steps.push({
     at: SOLD_AT,
     to: ["seller", "buyer"],
