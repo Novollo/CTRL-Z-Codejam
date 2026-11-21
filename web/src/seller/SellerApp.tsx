@@ -185,7 +185,7 @@ export function SellerApp() {
       {order && (screen === "order" || screen === "confirm") && <OrderScreen data={order} status={status} onUndo={onUndo} />}
       {screen === "agent" && <AgentScreen ready={!!sheet} onSee={() => setScreen("confirm")} />}
       {screen === "confirm" && sheet && order && (
-        <ConfirmSheet sheet={sheet} items={order.order.items} busy={busy} onList={onList} onNeverMind={backToOrder} />
+        <ConfirmSheet sheet={sheet} items={order.order.items} logoUrl={order.restaurant.logo_url} busy={busy} onList={onList} onNeverMind={backToOrder} />
       )}
       {screen === "live" && live && sheet && order && (
         <LiveScreen

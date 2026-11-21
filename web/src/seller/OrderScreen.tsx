@@ -22,7 +22,7 @@ export function OrderScreen({ data, status, onUndo }: { data: OrderResponse; sta
     <div className="flex h-full flex-col bg-white">
       <div className="flex-1 overflow-y-auto">
         <div className="relative">
-          <RestaurantPhoto src={restaurant.photo_url} />
+          <LogoHeader src={restaurant.logo_url} name={restaurant.name} />
           <span className="absolute top-3 right-3 rounded-full bg-white/90 px-2.5 py-1 text-small font-semibold text-ink shadow-sm">
             Demo app
           </span>
@@ -75,16 +75,20 @@ export function OrderScreen({ data, status, onUndo }: { data: OrderResponse; sta
   );
 }
 
-function RestaurantPhoto({ src }: { src: string }) {
-  const [missing, setMissing] = useState(false);
-  if (missing) {
-    return (
-      <div className="flex h-32 w-full items-center justify-center bg-mint text-forest">
-        <StoreIcon size={44} />
+/** Mint header with the restaurant logo on a white rounded tile (round 2b). Shop icon if the logo is missing. */
+function LogoHeader({ src, name }: { src: string; name: string }) {
+  const [missing, setMissing] = useState(!src);
+  return (
+    <div className="flex h-32 w-full items-center justify-center bg-mint">
+      <div className="ui-pop-in flex h-24 w-44 items-center justify-center rounded-card bg-white p-3 shadow-sm">
+        {missing ? (
+          <StoreIcon size={44} className="text-forest" />
+        ) : (
+          <img src={src} alt={name} className="h-full w-full object-contain" onError={() => setMissing(true)} />
+        )}
       </div>
-    );
-  }
-  return <img src={src} alt="" className="h-32 w-full object-cover" onError={() => setMissing(true)} />;
+    </div>
+  );
 }
 
 function ProgressBar({ stepIndex }: { stepIndex: number }) {
