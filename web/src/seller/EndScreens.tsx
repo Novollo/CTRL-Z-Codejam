@@ -26,7 +26,7 @@ export function SoldScreen({ soldPrice, orderTotal, pickupBy }: { soldPrice: num
         You got <span className="font-mono">{formatPrice(soldPrice)}</span> back.
       </p>
       <p className="mt-4 text-h3 text-leaf">You undid {share}% of your mistake.</p>
-      <p className="mt-6 text-body text-stone">A buyer picks it up at {clockTime(pickupBy)}. Nothing else to do.</p>
+      <p className="mt-6 text-body text-balance text-stone">A buyer picks it up at {clockTime(pickupBy)}. Nothing else to do.</p>
     </div>
   );
 }
@@ -35,7 +35,7 @@ export type NotSoldKind = "pickup" | "free" | "free_taken" | "donated";
 
 export function NotSoldScreen({ kind, restaurantName, pickupCode }: { kind: NotSoldKind; restaurantName: string; pickupCode: string }) {
   return (
-    <div className="flex h-full flex-col items-center justify-center bg-white px-8 text-center">
+    <div className="flex h-full flex-col items-center justify-center bg-white px-8 text-center text-balance">
       <Mascot pose={kind === "pickup" ? "bag" : "sitting"} size={170} />
       {kind === "pickup" && (
         <>

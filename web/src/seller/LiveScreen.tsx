@@ -63,19 +63,15 @@ export function LiveScreen({
       </div>
 
       <div className="space-y-1 border-t border-line px-5 pt-3 pb-6">
-        <div className="flex items-center justify-between py-2 text-body text-ink">
+        <div className="flex min-h-12 items-center justify-between py-1 text-body text-ink">
           <span>
-            Lowest price <span className="font-mono font-bold">{formatPrice(live.floor)}</span>
+            Lowest price {!editFloor && <span className="font-mono font-bold">{formatPrice(live.floor)}</span>}
           </span>
-          <button onClick={() => setEditFloor((v) => !v)} className="font-semibold text-forest">
+          {editFloor && <FloorStepper value={live.floor} range={range} onChange={onFloor} />}
+          <button onClick={() => setEditFloor((v) => !v)} className={`font-semibold ${editFloor ? "text-ink" : "text-forest"}`}>
             Edit
           </button>
         </div>
-        {editFloor && (
-          <div className="flex justify-end pb-2">
-            <FloorStepper value={live.floor} range={range} onChange={onFloor} />
-          </div>
-        )}
 
         <div className="flex items-center justify-between py-2 text-body text-ink">
           <span>If nobody buys: {FALLBACK_SHORT[live.fallback]}</span>

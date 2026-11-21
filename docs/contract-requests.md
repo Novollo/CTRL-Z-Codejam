@@ -5,7 +5,8 @@ Format: `- [ ] [track X] what you need · why · date`.
 
 ## Open requests
 
-_(none yet)_
+- [ ] [track A] **No "not sold" ending in the mock run.** The replay always ends with `listing.sold`, so S5b cannot be seen on `/ws`. Not blocking: track A added a test switch inside `web/src/seller` only: `/seller?end=pickup_self | free_window | free_expired | donated | free_taken` turns the mock's final `listing.sold` into that ending (only for `lst_demo`, never a real listing). The lead may prefer to add a closed ending to `shared/mocks/player.ts` instead. · 2026-11-21
+- [ ] [track A] **Booklet text gap: the free meal is taken.** S5b "Give it free" says "You'll get a thank-you when it's taken", but the thank-you text is not in the booklet. Placeholder used when `listing.sold` arrives with `sold_price` 0: "Someone nearby took it. Thank you!" Please confirm or give the exact text. · 2026-11-21
 
 ---
 
