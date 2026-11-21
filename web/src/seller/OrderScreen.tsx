@@ -4,7 +4,7 @@ import { formatPrice } from "@shared/constants";
 import type { OrderResponse } from "@shared/api";
 import type { OrderStatus } from "@shared/types";
 import { CheckIcon, StoreIcon, UndoIcon } from "./icons";
-import { Doodles, Mascot } from "../ui";
+import { Doodles, Icon, Mascot, sound } from "../ui";
 
 const STEPS: { status: OrderStatus; label: string }[] = [
   { status: "received", label: "Order received" },
@@ -12,7 +12,7 @@ const STEPS: { status: OrderStatus; label: string }[] = [
   { status: "ready", label: "Ready for pickup" },
 ];
 
-export function OrderScreen({ data, status, onUndo }: { data: OrderResponse; status: OrderStatus; onUndo: () => void }) {
+export function OrderScreen({ data, status, onUndo, onBack }: { data: OrderResponse; status: OrderStatus; onUndo: () => void; onBack: () => void }) {
   const { order, restaurant } = data;
   const orderNumber = `#${order.id.replace(/^\D+/, "")}`;
   const { service_fee, delivery_fee, tax } = order.fees;
@@ -23,9 +23,19 @@ export function OrderScreen({ data, status, onUndo }: { data: OrderResponse; sta
       <div className="flex-1 overflow-y-auto">
         <div className="relative">
           <LogoHeader src={restaurant.logo_url} name={restaurant.name} />
-          <span className="absolute top-3 right-3 rounded-full bg-white/90 px-2.5 py-1 text-small font-semibold text-ink shadow-sm">
-            Demo app
-          </span>
+          <div className="absolute top-3 left-3 flex items-center gap-2">
+            <button
+              aria-label="Back to home"
+              onClick={() => {
+                sound.tap();
+                onBack();
+              }}
+              className="ui-press flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-ink shadow-sm ring-1 ring-line"
+            >
+              <Icon name="chevronLeft" size={22} />
+            </button>
+            <span className="rounded-full bg-white/90 px-2.5 py-1 text-small font-semibold text-ink shadow-sm">Demo app</span>
+          </div>
         </div>
 
         <div className="px-5 pt-4">
@@ -35,6 +45,23 @@ export function OrderScreen({ data, status, onUndo }: { data: OrderResponse; sta
           <p className="mt-1 text-body text-stone">Order {orderNumber}</p>
 
           <ProgressBar stepIndex={stepIndex} />
+
+          {order.type === "delivery" && (
+            <div className="ui-flow-in mt-4 space-y-2 rounded-card bg-[#F6F6F6] px-3 py-2.5 text-small text-ink">
+              <p className="flex items-center gap-2.5">
+                <Icon name="courier" size={20} className="text-forest" />
+                <span>
+                  <span className="font-semibold">Courier assigned.</span> Waiting at {restaurant.name}.
+                </span>
+              </p>
+              <p className="flex items-center gap-2.5">
+                <Icon name="pin" size={20} className="text-forest" />
+                <span>
+                  Delivering to <span className="font-semibold">{order.customer_name}</span> · McGill campus
+                </span>
+              </p>
+            </div>
+          )}
 
           <div className="mt-4 border-t border-line pt-2">
             {order.items.map((item, i) => (

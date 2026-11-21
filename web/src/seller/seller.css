@@ -9,6 +9,9 @@
 @keyframes seller-spin { to { transform: rotate(360deg); } }
 .seller-spin { animation: seller-spin 0.9s linear infinite; }
 
+@keyframes seller-typing { 0%, 60%, 100% { transform: translateY(0); opacity: .5 } 30% { transform: translateY(-3px); opacity: 1 } }
+.seller-typing { animation: seller-typing 1s ease-in-out infinite; }
+
 @media (prefers-reduced-motion: reduce) {
   [class*="seller-"] { animation-duration: 0.001s !important; animation-iteration-count: 1 !important; }
 }

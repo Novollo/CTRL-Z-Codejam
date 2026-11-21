@@ -1,41 +1,52 @@
-// Seller app, route /seller (booklet section 5): S1 → S2 → S3 → S4 → S5a / S5b.
+// Seller app, route /seller (booklet section 5 + design round 4):
+// Home → S1 → S2 → S3 → S4 → S5a / S5b → "Back to home" (the banner shows the result).
 import { useEffect, useRef, useState } from "react";
 import type { OrderResponse, UndoResponse } from "@shared/api";
 import { TAG_LABELS, type Fallback } from "@shared/catalog";
+import { formatPrice } from "@shared/constants";
 import type { LiveMessage } from "@shared/messages";
 import type { OrderStatus } from "@shared/types";
 import { Confetti, MuteButton, haptic, sound } from "../ui";
 import { AgentScreen } from "./AgentScreen";
 import { ConfirmSheet } from "./ConfirmSheet";
 import { NotSoldScreen, SoldScreen, type NotSoldKind } from "./EndScreens";
+import { HomeScreen, type OrderBanner } from "./HomeScreen";
 import { LiveScreen, type LiveState } from "./LiveScreen";
 import { OrderScreen } from "./OrderScreen";
 import { connectSeller, getOrder, patchListing, publishListing, stopListing, undoOrder } from "./sellerApi";
 import "./seller.css";
 
-type Screen = "order" | "agent" | "confirm" | "live" | "sold" | "notsold";
+type Screen = "home" | "order" | "agent" | "confirm" | "live" | "end";
+
+/** How the listing ended. null while there is no ending yet. */
+type Outcome = null | { kind: "sold"; price: number; pickupBy: number } | { kind: NotSoldKind; code: string };
 
 /** The server answers within 5 s (agent timeout → defaults). Past this, quietly go back to S1. */
 const AGENT_GIVE_UP_MS = 9000;
+/** Demo arrival time on the banner: food ready + this long for the courier. */
+const DELIVERY_MIN = 15;
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const clock = (ms: number) => {
+  const d = new Date(ms);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+};
 
 export function SellerApp() {
   const [order, setOrder] = useState<OrderResponse | null>(null);
   const [status, setStatus] = useState<OrderStatus>("preparing");
-  const [screen, setScreen] = useState<Screen>("order");
+  const [screen, setScreen] = useState<Screen>("home");
   const [sheet, setSheet] = useState<UndoResponse | null>(null);
   const [busy, setBusy] = useState(false);
   const [burst, setBurst] = useState(0); // confetti when listed
   const [live, setLive] = useState<LiveState | null>(null);
-  const [sold, setSold] = useState<{ price: number; pickupBy: number } | null>(null);
-  const [notSold, setNotSold] = useState<{ kind: NotSoldKind; code: string } | null>(null);
+  const [outcome, setOutcome] = useState<Outcome>(null);
 
-  const screenRef = useRef<Screen>("order");
-  screenRef.current = screen;
+  const outcomeRef = useRef<Outcome>(null);
+  outcomeRef.current = outcome;
   const stopLiveRef = useRef<(() => void) | null>(null);
 
-  // S1 data. Retry quietly until the server answers.
+  // Order data. Retry quietly until the server answers.
   useEffect(() => {
     let cancelled = false;
     const load = () =>
@@ -66,6 +77,9 @@ export function SellerApp() {
     setLive(null);
     setScreen("order");
   };
+
+  // Banner / "Orders" tab: the order tracker, or the ending once there is one.
+  const openOrder = () => setScreen(outcomeRef.current ? "end" : "order");
 
   // S1 → S2. The agent runs in the background; S2 shows "See my listing →" once it has answered.
   const onUndo = async () => {
@@ -100,7 +114,7 @@ export function SellerApp() {
       });
       setScreen("live");
       setBurst((b) => b + 1);
-      sound.success();
+      sound.success(); // once when listed (round 3)
       haptic.success();
       disconnect();
       stopLiveRef.current = connectSeller((msg) => onLiveMessage(sheet.listing_id, msg));
@@ -118,9 +132,9 @@ export function SellerApp() {
       return;
     }
     if (!("listing_id" in msg) || msg.listing_id !== listingId) return;
-    const current = screenRef.current;
+    const ended = outcomeRef.current;
 
-    if (current === "live") {
+    if (!ended) {
       if (msg.type === "listing.tick") {
         setLive((l) => l && { ...l, price: msg.price, secondsLeft: msg.seconds_left, totalSeconds: Math.max(l.totalSeconds, msg.seconds_left) });
       } else if (msg.type === "listing.locked") {
@@ -134,27 +148,27 @@ export function SellerApp() {
         setLive((l) => l && { ...l, reached: msg.reached });
       } else if (msg.type === "listing.sold") {
         disconnect();
-        setSold({ price: msg.sold_price, pickupBy: msg.pickup_by });
-        setScreen("sold");
+        setOutcome({ kind: "sold", price: msg.sold_price, pickupBy: msg.pickup_by });
+        setScreen("end");
       }
     }
 
-    if (msg.type === "listing.closed" && (current === "live" || current === "notsold")) {
+    if (msg.type === "listing.closed" && (!ended || ended.kind === "free")) {
       const code = msg.pickup_code ?? order?.order.pickup_code ?? "";
       if (msg.outcome === "stopped") return backToOrder();
       if (msg.outcome === "free_window") {
-        setNotSold({ kind: "free", code });
+        setOutcome({ kind: "free", code });
       } else {
         disconnect();
-        setNotSold({ kind: msg.outcome === "donated" ? "donated" : "pickup", code });
+        setOutcome({ kind: msg.outcome === "donated" ? "donated" : "pickup", code });
       }
-      setScreen("notsold");
+      if (!ended) setScreen("end");
     }
 
-    // Free window: someone took it for $0.
-    if (msg.type === "listing.sold" && current === "notsold") {
+    // Free window: someone took it for $0 (the seller may be on Home by now; the banner updates).
+    if (msg.type === "listing.sold" && ended?.kind === "free") {
       disconnect();
-      setNotSold((n) => n && { ...n, kind: "free_taken" });
+      setOutcome({ kind: "free_taken", code: ended.code });
     }
   };
 
@@ -176,12 +190,23 @@ export function SellerApp() {
     backToOrder();
   };
 
+  const goHome = () => setScreen("home");
+  const restaurantName = order?.restaurant.name ?? "";
+  const banner: OrderBanner = order
+    ? bannerFor(outcome, status, restaurantName, order.restaurant.logo_url, order.order.ready_at)
+    : { logoUrl: "", title: "Your order", line: "Loading…", good: false };
+
   return (
     <div
       onPointerDown={sound.unlock}
       className="relative mx-auto h-dvh max-h-[844px] w-full max-w-[390px] overflow-hidden bg-white font-sans text-ink"
     >
-      {order && (screen === "order" || screen === "confirm") && <OrderScreen data={order} status={status} onUndo={onUndo} />}
+      {screen === "home" && <HomeScreen banner={banner} featuredId={order?.restaurant.id ?? "r_fiveguys"} onOpenOrder={openOrder} />}
+      {order && (screen === "order" || screen === "confirm") && (
+        <div className="seller-sheet-up h-full">
+          <OrderScreen data={order} status={status} onUndo={onUndo} onBack={goHome} />
+        </div>
+      )}
       {screen === "agent" && <AgentScreen ready={!!sheet} onSee={() => setScreen("confirm")} />}
       {screen === "confirm" && sheet && order && (
         <ConfirmSheet sheet={sheet} items={order.order.items} logoUrl={order.restaurant.logo_url} busy={busy} onList={onList} onNeverMind={backToOrder} />
@@ -190,17 +215,36 @@ export function SellerApp() {
         <LiveScreen
           live={live}
           range={{ min: sheet.floor_min, max: sheet.floor_max, step: sheet.floor_step }}
-          restaurant={order.restaurant.name}
+          restaurant={restaurantName}
           food={sheet.tags[0] ? TAG_LABELS[sheet.tags[0]].toLowerCase() : "good food"}
+          delivery={order.order.type === "delivery"}
           onFloor={onFloor}
           onFallback={onFallback}
           onStop={onStop}
         />
       )}
-      {screen === "sold" && sold && order && <SoldScreen soldPrice={sold.price} orderTotal={order.order.total} pickupBy={sold.pickupBy} />}
-      {screen === "notsold" && notSold && order && <NotSoldScreen kind={notSold.kind} restaurantName={order.restaurant.name} pickupCode={notSold.code} />}
+      {screen === "end" && outcome?.kind === "sold" && order && (
+        <SoldScreen soldPrice={outcome.price} orderTotal={order.order.total} pickupBy={outcome.pickupBy} onHome={goHome} />
+      )}
+      {screen === "end" && outcome && outcome.kind !== "sold" && (
+        <NotSoldScreen kind={outcome.kind} restaurantName={restaurantName} pickupCode={outcome.code} onHome={goHome} />
+      )}
       {screen === "live" && burst > 0 && <Confetti key={burst} pieces={70} durationMs={2000} />}
-      <MuteButton className="absolute top-3 left-3 z-40" />
+      <MuteButton className="absolute top-3 right-3 z-40" />
     </div>
   );
+}
+
+/** The sticky banner on Home: where the order stands. */
+function bannerFor(outcome: Outcome, status: OrderStatus, restaurant: string, logoUrl: string, readyAt: number | null): OrderBanner {
+  const base = { logoUrl, title: "Your order" };
+  if (outcome?.kind === "sold") return { ...base, line: `Resold on Ctrl+Z Eats · ${formatPrice(outcome.price)} back`, good: true };
+  if (outcome?.kind === "free") return { ...base, line: "Free for someone nearby", good: false };
+  if (outcome?.kind === "free_taken") return { ...base, line: "Taken by someone nearby. Thank you!", good: true };
+  if (outcome?.kind === "donated") return { ...base, line: "Set aside for donation", good: true };
+  if (outcome?.kind === "pickup") return { ...base, line: `Waiting at ${restaurant} for you`, good: false };
+  const arriving = clock((readyAt ?? Date.now()) + DELIVERY_MIN * 60_000);
+  if (status === "ready") return { ...base, line: `Ready · arriving ${arriving}`, good: false };
+  if (status === "picked_up") return { ...base, line: "On its way", good: false };
+  return { ...base, line: `Preparing · arriving ${arriving}`, good: false };
 }

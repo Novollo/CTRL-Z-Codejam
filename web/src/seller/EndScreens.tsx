@@ -1,7 +1,7 @@
 // S5a. Sold (big celebration), and S5b. Not sold (booklet 5, S5a and S5b + design round 2).
 import { useEffect, useState } from "react";
 import { formatPrice } from "@shared/constants";
-import { Confetti, Mascot, haptic, sound, type Motion, type Pose } from "../ui";
+import { Confetti, Icon, Mascot, haptic, sound, type Motion, type Pose } from "../ui";
 import { CountUp } from "./CountUp";
 
 /** "14:32" in the phone's local time. */
@@ -12,7 +12,7 @@ const clockTime = (ms: number) => {
 
 const COUNT_MS = 1400;
 
-export function SoldScreen({ soldPrice, orderTotal, pickupBy }: { soldPrice: number; orderTotal: number; pickupBy: number }) {
+export function SoldScreen({ soldPrice, orderTotal, pickupBy, onHome }: { soldPrice: number; orderTotal: number; pickupBy: number; onHome: () => void }) {
   const share = Math.round((soldPrice / orderTotal) * 100);
   const [counted, setCounted] = useState(false);
 
@@ -43,6 +43,7 @@ export function SoldScreen({ soldPrice, orderTotal, pickupBy }: { soldPrice: num
       <p className="ui-fade-in mt-6 text-body text-balance text-stone" style={{ animationDelay: `${COUNT_MS / 1000 + 0.4}s` }}>
         A buyer picks it up at {clockTime(pickupBy)}. Nothing else to do.
       </p>
+      <HomeButton onHome={onHome} />
     </div>
   );
 }
@@ -56,7 +57,17 @@ const LOOK: Record<NotSoldKind, { pose: Pose; motion: Motion; sparkles?: boolean
   donated: { pose: "thumbsup", motion: "bounce", sparkles: true },
 };
 
-export function NotSoldScreen({ kind, restaurantName, pickupCode }: { kind: NotSoldKind; restaurantName: string; pickupCode: string }) {
+export function NotSoldScreen({
+  kind,
+  restaurantName,
+  pickupCode,
+  onHome,
+}: {
+  kind: NotSoldKind;
+  restaurantName: string;
+  pickupCode: string;
+  onHome: () => void;
+}) {
   const look = LOOK[kind];
 
   useEffect(() => {
@@ -84,6 +95,24 @@ export function NotSoldScreen({ kind, restaurantName, pickupCode }: { kind: NotS
       )}
       {kind === "free_taken" && <p className="ui-pop-in ui-delay-2 mt-8 text-h1 text-forest">Someone nearby took it. Thank you!</p>}
       {kind === "donated" && <p className="ui-flow-in ui-delay-2 mt-8 text-h2 text-ink">Thanks! Your meal is set aside for donation.</p>}
+      <HomeButton onHome={onHome} />
     </div>
+  );
+}
+
+/** "Back to home" (round 4): returns to the delivery-app Home, where the banner shows the result. */
+function HomeButton({ onHome }: { onHome: () => void }) {
+  return (
+    <button
+      onClick={() => {
+        sound.tap();
+        onHome();
+      }}
+      className="ui-press ui-flow-in absolute inset-x-5 bottom-6 flex h-bottom items-center justify-center gap-2 rounded-card border border-line bg-white text-h3 text-ink shadow-sm"
+      style={{ animationDelay: "1.6s" }}
+    >
+      <Icon name="home" size={20} />
+      Back to home
+    </button>
   );
 }

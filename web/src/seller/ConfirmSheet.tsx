@@ -4,7 +4,7 @@ import { TAG_LABELS, type Fallback } from "@shared/catalog";
 import { formatPrice } from "@shared/constants";
 import type { UndoResponse } from "@shared/api";
 import type { OrderItem } from "@shared/types";
-import { Mascot, haptic, sound } from "../ui";
+import { Icon, Mascot, haptic, sound } from "../ui";
 import { FallbackPicker, FloorStepper } from "./controls";
 import { AlertIcon, ArrowRightIcon } from "./icons";
 
@@ -76,8 +76,8 @@ export function ConfirmSheet({
             </div>
             <div className="mt-3 flex items-center gap-2 rounded-card bg-mint py-1 pr-3 pl-1 text-small font-semibold text-forest">
               <Mascot pose="proud" motion="breathe" size={52} className="shrink-0" />
-              <p>
-                <span aria-hidden>🔥 </span>
+              <p className="flex items-start gap-1.5">
+                <Icon name="flame" size={16} className="mt-px text-forest" />
                 {demandLine(sheet)}
               </p>
             </div>
