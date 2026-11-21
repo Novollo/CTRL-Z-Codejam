@@ -79,10 +79,12 @@ export function OfferScreen({ offer, busy, onBuy, onNotNow, onPay }: Props) {
           {formatClock(card.seconds_left)} left
         </p>
 
-        <p className="mt-4 flex items-start gap-2 font-medium text-forest">
-          <Icon name="check" className="mt-0.5 h-5 w-5 shrink-0 text-leaf" />
-          {offer.step === "card" ? offer.reason : ""}
-        </p>
+        {offer.step === "card" && (
+          <p className="mt-4 flex items-start gap-2 font-medium text-forest">
+            <Icon name="check" className="mt-0.5 h-5 w-5 shrink-0 text-leaf" />
+            {offer.reason}
+          </p>
+        )}
 
         {held && !lost && (
           <p className="mt-4 rounded-card bg-amber/15 px-4 py-3 font-medium text-ink">

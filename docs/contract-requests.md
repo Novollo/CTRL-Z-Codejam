@@ -5,7 +5,7 @@ Format: `- [ ] [track X] what you need · why · date`.
 
 ## Open requests
 
-_(none yet)_
+- [ ] [track B] Add `buyer_id: string` to `ListingCardResponse` (GET `/api/listings/:id` with the token header) · why: `/buy/:listingId?t=` (Telegram "Buy now") only has the token, but `connectLive` needs the buyer id, so a Telegram-only buyer gets no live ticks / B-hold / B-lost. Today track B falls back to re-reading GET `/api/listings/:id` every 2 s on that page (needs the real API to return `status: "locked"` + `lock_until` while locked; after a sale the card just stays until the buyer taps). With `buyer_id`, BuyPage would save id + token and use `/ws` like `/join`. · Nov 21
 
 ---
 
