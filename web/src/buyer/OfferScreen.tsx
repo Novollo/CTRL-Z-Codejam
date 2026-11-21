@@ -1,7 +1,7 @@
 // B3 offer card, B-hold, B-lost and B4 locked (booklet 6, design round 2). Full-screen, slides up.
 import { TAG_LABELS } from "@shared/catalog";
 import { LOCK_SEC, formatClock, formatPrice } from "@shared/constants";
-import { Doodles, Mascot, sound } from "../ui";
+import { Doodles, Icon as KitIcon, Mascot, sound } from "../ui";
 import { LogoTile } from "./logos";
 import type { Offer } from "./useOfferFlow";
 import { BottomButton, FoodPhoto, Icon, Tag, useNow } from "./ui";
@@ -146,7 +146,8 @@ export function OfferScreen({ offer, busy, onBuy, onNotNow, onPay }: Props) {
           {!lost && watching !== null && watching > 0 && (
             <span className="ui-fade-in flex items-center gap-2 text-small font-semibold text-ink">
               <span className="buyer-dot h-2.5 w-2.5 rounded-full bg-amber" />
-              👀 {watching} {watching === 1 ? "person" : "people"} watching right now
+              <KitIcon name="eye" size={16} className="text-ink" />
+              {watching} {watching === 1 ? "person" : "people"} watching right now
             </span>
           )}
         </div>

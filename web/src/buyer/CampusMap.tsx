@@ -1,7 +1,7 @@
 // B1 "Where are you?" (round 3): a tappable schematic campus map from CAMPUS_MAP, plus a chip list fallback.
 import { CAMPUS_SPOTS, type CampusSpot } from "@shared/catalog";
 import { CAMPUS_MAP, type MapBuilding } from "@shared/campusMap";
-import { Doodles, haptic, sound } from "../ui";
+import { Doodles, Icon as KitIcon, haptic, sound } from "../ui";
 import { Chip } from "./ui";
 
 const RED = "#D94B45";
@@ -121,7 +121,7 @@ export function CampusMap({ value, onChange }: { value: CampusSpot | null; onCha
       </div>
 
       <p className="mt-2 min-h-6 text-body font-bold text-ink" aria-live="polite">
-        {pickedLabel ? <span key={pickedLabel} className="ui-pop-in inline-block">📍 {pickedLabel}</span> : <span className="font-medium text-stone">Tap your building on the map</span>}
+        {pickedLabel ? <span key={pickedLabel} className="ui-pop-in inline-flex items-center gap-1.5"><KitIcon name="pin" size={18} className="text-forest" />{pickedLabel}</span> : <span className="font-medium text-stone">Tap your building on the map</span>}
       </p>
 
       <div className="mt-2 flex flex-wrap gap-1.5">

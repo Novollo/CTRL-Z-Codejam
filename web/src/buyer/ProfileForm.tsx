@@ -3,7 +3,7 @@ import { useState, type CSSProperties, type ReactNode } from "react";
 import type { BuyerProfileInput } from "@shared/api";
 import { BUYER_DIETS, FOOD_TYPES, WALK_CHOICES_MIN, type BuyerDiet, type FoodType } from "@shared/catalog";
 import { BUYER_MAX_PRICE, formatPrice } from "@shared/constants";
-import { Mascot, haptic } from "../ui";
+import { Icon as KitIcon, Mascot, haptic } from "../ui";
 import { CampusMap } from "./CampusMap";
 import { BottomButton, Chip, Logo, Toggle } from "./ui";
 
@@ -85,7 +85,8 @@ export function ProfileForm({ initial, onSubmit }: { initial: BuyerProfileInput;
           <Section title="What do you like?" step={2}>
             {/* "Anything" = no food types (round 3): exclusive with the specific types. */}
             <Chip on={p.food_types.length === 0} onClick={() => set({ food_types: [] })}>
-              Anything 🍽️
+              <KitIcon name="utensils" size={16} />
+              Anything
             </Chip>
             {FOOD_TYPES.map((f) => (
               <Chip key={f.key} on={p.food_types.includes(f.key)} onClick={() => set({ food_types: toggle<FoodType>(p.food_types, f.key) })}>

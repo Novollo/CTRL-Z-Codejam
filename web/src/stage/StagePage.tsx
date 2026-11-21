@@ -5,10 +5,10 @@ import { useEffect, useState } from "react";
 import { PAGE } from "@shared/api";
 import { PHONE } from "@shared/tokens";
 
-const BEZEL = 14;
+export const BEZEL = 14;
 const GAP = 64;
-const FRAME_W = PHONE.width + BEZEL * 2;
-const FRAME_H = PHONE.height + BEZEL * 2;
+export const FRAME_W = PHONE.width + BEZEL * 2;
+export const FRAME_H = PHONE.height + BEZEL * 2;
 
 function fitScale(): number {
   const byHeight = (window.innerHeight - 32) / FRAME_H;
@@ -16,7 +16,7 @@ function fitScale(): number {
   return Math.min(1, byHeight, byWidth);
 }
 
-function Phone({ src, title }: { src: string; title: string }) {
+export function Phone({ src, title }: { src: string; title: string }) {
   return (
     <div className="rounded-[56px] bg-ink shadow-2xl" style={{ padding: BEZEL, width: FRAME_W, height: FRAME_H }}>
       <iframe src={src} title={title} width={PHONE.width} height={PHONE.height} className="block rounded-[44px] border-0 bg-white" />
