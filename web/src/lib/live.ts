@@ -10,17 +10,24 @@ import { API } from "@shared/api";
 import type { LiveMessage } from "@shared/messages";
 import { playMockRun } from "@shared/mocks/player";
 
-export type LiveTarget = { role: "seller"; orderId: string } | { role: "buyer"; buyerId: string };
+export type LiveTarget =
+  | { role: "seller"; orderId: string }
+  | { role: "buyer"; buyerId: string }
+  | { role: "restaurant"; restaurantId: string }; // round 4
 
 export function connectLive(target: LiveTarget, onMessage: (msg: LiveMessage) => void): () => void {
   const params = new URLSearchParams(window.location.search);
   const speed = Number(params.get("speed")) || undefined;
 
   if (params.get("mock") === "local") {
+    if (target.role === "restaurant") return () => {}; // no restaurant mock replay; the restaurant page has its own ?sim=1
     return playMockRun({ role: target.role, onMessage, speed, loop: true });
   }
 
-  let path = target.role === "seller" ? API.wsSeller(target.orderId) : API.wsBuyer(target.buyerId);
+  let path =
+    target.role === "seller" ? API.wsSeller(target.orderId)
+    : target.role === "buyer" ? API.wsBuyer(target.buyerId)
+    : API.wsRestaurant(target.restaurantId);
   if (speed) path += `&speed=${speed}`;
   const url = `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}${path}`;
 
