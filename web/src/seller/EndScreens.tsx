@@ -53,10 +53,10 @@ export function SoldScreen({ soldPrice, orderTotal, pickupBy }: { soldPrice: num
 export type NotSoldKind = "pickup" | "free" | "free_taken" | "donated";
 
 const LOOK: Record<NotSoldKind, { pose: Pose; motion: Motion; sparkles?: boolean }> = {
-  pickup: { pose: "bag", motion: "wiggle" },
-  free: { pose: "sitting", motion: "breathe" },
+  pickup: { pose: "bag", motion: "bob" },
+  free: { pose: "waving", motion: "breathe" },
   free_taken: { pose: "jumping", motion: "jump", sparkles: true },
-  donated: { pose: "bag", motion: "bob", sparkles: true },
+  donated: { pose: "thumbsup", motion: "bounce", sparkles: true },
 };
 
 export function NotSoldScreen({ kind, restaurantName, pickupCode }: { kind: NotSoldKind; restaurantName: string; pickupCode: string }) {

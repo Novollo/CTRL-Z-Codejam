@@ -31,9 +31,9 @@ export function AgentScreen({ ready, onSee }: { ready: boolean; onSee: () => voi
     <div className="flex h-full flex-col bg-mint">
       <div className="flex flex-1 flex-col items-center justify-center px-8">
         {done ? (
-          <Mascot key="done" pose="jumping" motion="jump" sparkles size={180} />
+          <Mascot key="done" pose="thumbsup" motion="bounce" sparkles size={180} />
         ) : (
-          <Mascot key="work" cycle={["thinking", "sitting"]} cycleMs={1600} motion="stir" size={180} />
+          <Mascot key="work" cycle={["thinking", "pointing"]} cycleMs={1600} motion="stir" size={180} />
         )}
 
         <ul className="mt-10 w-full max-w-[330px] space-y-4">

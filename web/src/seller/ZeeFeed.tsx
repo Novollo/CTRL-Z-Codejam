@@ -102,7 +102,7 @@ export function ZeeFeed({ live, restaurant, food }: { live: LiveState; restauran
   return (
     <section className="flex gap-3 rounded-card bg-mint p-3">
       <div className="flex shrink-0 flex-col items-center">
-        <Mascot cycle={["thinking", "sitting"]} cycleMs={2200} motion="bob" size={60} />
+        <Mascot cycle={["sitting", "pointing", "thumbsup"]} cycleMs={2200} motion="bob" size={60} />
         <span className="mt-1 flex items-center gap-1 text-[11px] font-bold text-forest">
           <span className="ui-pulse-ring h-2 w-2 rounded-full bg-leaf" />
           Zee

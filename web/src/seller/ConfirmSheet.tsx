@@ -4,7 +4,7 @@ import { TAG_LABELS, type Fallback } from "@shared/catalog";
 import { formatPrice } from "@shared/constants";
 import type { UndoResponse } from "@shared/api";
 import type { OrderItem } from "@shared/types";
-import { haptic, sound } from "../ui";
+import { Mascot, haptic, sound } from "../ui";
 import { FallbackPicker, FloorStepper } from "./controls";
 import { AlertIcon, ArrowRightIcon } from "./icons";
 
@@ -74,10 +74,13 @@ export function ConfirmSheet({
               <span className="text-body text-ink">Lowest price:</span>
               <FloorStepper value={floor} range={range} onChange={setFloor} />
             </div>
-            <p className="mt-3 flex items-center gap-2 rounded-card bg-mint px-3 py-2 text-small font-semibold text-forest">
-              <span aria-hidden>🔥</span>
-              {demandLine(sheet)}
-            </p>
+            <div className="mt-3 flex items-center gap-2 rounded-card bg-mint py-1 pr-3 pl-1 text-small font-semibold text-forest">
+              <Mascot pose="proud" motion="breathe" size={52} className="shrink-0" />
+              <p>
+                <span aria-hidden>🔥 </span>
+                {demandLine(sheet)}
+              </p>
+            </div>
           </section>
 
           {/* 3. If nobody buys it */}

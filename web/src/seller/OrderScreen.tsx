@@ -66,7 +66,7 @@ export function OrderScreen({ data, status, onUndo }: { data: OrderResponse; sta
             <UndoIcon size={22} />
             Ctrl+Z this order
             <span className="ml-1 overflow-hidden rounded-full bg-white">
-              <Mascot pose="sitting" motion="none" size={32} />
+              <Mascot pose="waving" motion="none" size={32} />
             </span>
           </button>
         )}
