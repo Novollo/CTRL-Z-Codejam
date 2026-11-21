@@ -36,7 +36,7 @@ export function AgentScreen({ ready, onSee }: { ready: boolean; onSee: () => voi
           <Mascot key="work" cycle={["thinking", "sitting"]} cycleMs={1600} motion="stir" size={180} />
         )}
 
-        <ul className="mt-10 w-full max-w-[300px] space-y-4">
+        <ul className="mt-10 w-full max-w-[330px] space-y-4">
           {LINES.slice(0, shown).map((line, i) => {
             const checked = i < shown - 1 || done;
             return (

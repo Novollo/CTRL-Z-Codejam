@@ -28,22 +28,22 @@ export function OrderScreen({ data, status, onUndo }: { data: OrderResponse; sta
           </span>
         </div>
 
-        <div className="px-5 pt-5">
-          <h1 className="text-[32px] leading-tight font-bold text-ink">
+        <div className="px-5 pt-4">
+          <h1 className="text-[30px] leading-tight font-bold text-ink">
             {restaurant.name} · {order.type === "pickup" ? "Pickup" : "Delivery"}
           </h1>
           <p className="mt-1 text-body text-stone">Order {orderNumber}</p>
 
           <ProgressBar stepIndex={stepIndex} />
 
-          <div className="mt-6 border-t border-line pt-4">
+          <div className="mt-4 border-t border-line pt-2">
             {order.items.map((item, i) => (
-              <div key={item.name} className={`ui-slide-up ui-delay-${i + 1} py-2`}>
+              <div key={item.name} className={`ui-slide-up ui-delay-${i + 1} py-1.5`}>
                 <Row label={item.name} value={formatPrice(item.price)} strong />
                 {item.description && <p className="pr-16 text-small leading-snug text-stone">{item.description}</p>}
               </div>
             ))}
-            <div className="mt-3 border-t border-line pt-3">
+            <div className="mt-2 border-t border-line pt-2">
               <Row label="Service fee" value={formatPrice(service_fee)} />
               {delivery_fee > 0 && <Row label="Delivery fee" value={formatPrice(delivery_fee)} />}
               <Row label="Tax" value={formatPrice(tax)} />
@@ -53,7 +53,7 @@ export function OrderScreen({ data, status, onUndo }: { data: OrderResponse; sta
         </div>
       </div>
 
-      <div className="space-y-3 border-t border-line px-5 pt-4 pb-6">
+      <div className="space-y-2.5 border-t border-line px-5 pt-3 pb-5">
         <button disabled className="h-bottom w-full rounded-card bg-line text-body font-semibold text-stone">
           Cancel order
         </button>
@@ -79,17 +79,17 @@ function RestaurantPhoto({ src }: { src: string }) {
   const [missing, setMissing] = useState(false);
   if (missing) {
     return (
-      <div className="flex h-44 w-full items-center justify-center bg-mint text-forest">
+      <div className="flex h-32 w-full items-center justify-center bg-mint text-forest">
         <StoreIcon size={44} />
       </div>
     );
   }
-  return <img src={src} alt="" className="h-44 w-full object-cover" onError={() => setMissing(true)} />;
+  return <img src={src} alt="" className="h-32 w-full object-cover" onError={() => setMissing(true)} />;
 }
 
 function ProgressBar({ stepIndex }: { stepIndex: number }) {
   return (
-    <div className="mt-5">
+    <div className="mt-4">
       <div className="flex gap-1.5">
         {STEPS.map((s, i) => (
           <div key={s.status} className={`h-1.5 flex-1 rounded-full ${i <= stepIndex ? "bg-forest" : "bg-line"}`} />
@@ -112,7 +112,7 @@ function ProgressBar({ stepIndex }: { stepIndex: number }) {
 
 function Row({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
   return (
-    <div className={`flex justify-between py-1 ${strong ? "text-body font-semibold text-ink" : "text-small text-stone"}`}>
+    <div className={`flex justify-between py-0.5 ${strong ? "text-body font-semibold text-ink" : "text-small text-stone"}`}>
       <span>{label}</span>
       <span>{value}</span>
     </div>

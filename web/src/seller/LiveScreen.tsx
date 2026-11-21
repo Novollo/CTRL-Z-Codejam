@@ -92,9 +92,15 @@ export function LiveScreen({
             <StatPill emoji="⚡" value={live.stats.watching} before="" after=" watching now" />
           </div>
         ) : (
-          seen > 0 && (
-            <p className="ui-fade-in rounded-full bg-mint px-4 py-1.5 text-body font-semibold text-forest">Sent to {seen} people nearby</p>
-          )
+          // Until the first listing.stats arrives: shimmering pills (and the reach line once people are pinged).
+          <div className="w-full">
+            <div className="grid grid-cols-3 gap-2" aria-hidden>
+              {[0, 1, 2].map((k) => (
+                <div key={k} className="ui-shimmer h-[58px] rounded-card" />
+              ))}
+            </div>
+            {seen > 0 && <p className="ui-fade-in mt-2 text-center text-body font-semibold text-forest">Sent to {seen} people nearby</p>}
+          </div>
         )}
 
         <div className="w-full">

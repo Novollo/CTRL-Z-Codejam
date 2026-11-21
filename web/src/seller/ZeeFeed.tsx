@@ -28,8 +28,11 @@ export function ZeeFeed({ live, restaurant, food }: { live: LiveState; restauran
   const push = (text: string, tone: Tone = "normal") =>
     setLines((ls) => [{ id: nextId.current++, text, tone }, ...ls].slice(0, MAX_LINES));
 
-  // First line, once.
+  // First line, once (guarded: React dev mode runs effects twice).
+  const started = useRef(false);
   useEffect(() => {
+    if (started.current) return;
+    started.current = true;
     push(`Your order is live at ${formatPrice(liveRef.current.price)}. I'm on it!`, "good");
   }, []);
 
@@ -45,7 +48,7 @@ export function ZeeFeed({ live, restaurant, food }: { live: LiveState; restauran
     const flavour = [
       () => `Highlighting "fresh, untouched" to people who want ${food}`,
       () => `Checking who's between classes near ${pick(CAMPUS_SPOTS, mem.current.flavour + 2).label}`,
-      () => `Telling ${food} fans there are no delivery or service fees`,
+      () => `Telling people who want ${food}: no delivery or service fees`,
       () => `Keeping the price moving so it sells while it's hot`,
       () => `Reminding buyers it's ready at the ${restaurant} counter`,
     ];
@@ -104,7 +107,7 @@ export function ZeeFeed({ live, restaurant, food }: { live: LiveState; restauran
           Zee
         </span>
       </div>
-      <ul className="relative h-[132px] flex-1 overflow-hidden">
+      <ul className="relative h-[228px] flex-1 overflow-hidden">
         {lines.map((line, i) => (
           <li
             key={line.id}
