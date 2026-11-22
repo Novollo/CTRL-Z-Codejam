@@ -197,14 +197,38 @@ async function main() {
   check((await call("GET", `/api/listings/${id}/pass`, undefined, a.token)).status === 404, "no pass before payment");
   const lockedCard = await call("GET", `/api/listings/${id}`, undefined, b.token);
   check(lockedCard.data?.listing.status === "locked" && lockedCard.data.listing.lock_until === buyA.data.lock_until, "GET listing card while locked → status locked + lock_until");
+  check(lockedCard.data?.listing.price === buyA.data.price, `GET listing card while locked → frozen at the lock price $${lockedCard.data?.listing.price}`);
 
   let winner = { name: "Alice", token: a.token, live: alice, price: buyA.data.price };
   let loser = { name: "Bob", token: b.token, live: bob };
 
   if (SCENARIO === "lock") {
     log("  Alice does not pay. Waiting for the 60 s lock to run out…");
+    const frozen = buyA.data.price;
+    const lockedIdx = seller.msgs.findIndex(of("listing.locked", id));
+    const kitchenFrom = kitchen.msgs.length;
     const unlocked = await bob.waitFor("listing.unlocked", of("listing.unlocked", id), 75_000);
-    check(unlocked.price <= buyA.data.price, `listing.unlocked after ${((Date.now() - buyA.data.lock_until + 60_000) / 1000).toFixed(0)} s, back at $${unlocked.price}`);
+    const unlockedAt = Date.now();
+    check(unlocked.price <= frozen, `listing.unlocked after ${((unlockedAt - buyA.data.lock_until + 60_000) / 1000).toFixed(0)} s, back at $${unlocked.price}`);
+
+    // The price stood still for everyone while Alice was paying.
+    const unlockedIdx = seller.msgs.findIndex(of("listing.unlocked", id));
+    const lockTicks = seller.msgs.slice(lockedIdx, unlockedIdx).filter(of("listing.tick", id));
+    check(lockTicks.length >= 20 && lockTicks.every((t) => t.price === frozen), `seller: all ${lockTicks.length} ticks during the lock stay at $${frozen}`);
+    const bobTicks = bob.msgs.slice(bob.msgs.findIndex(of("listing.locked", id)), bob.msgs.findIndex(of("listing.unlocked", id))).filter(of("listing.tick", id));
+    check(bobTicks.length >= 20 && bobTicks.every((t) => t.price === frozen), `Bob's card: all ${bobTicks.length} ticks during the lock stay at $${frozen}`);
+    const tabletLocked = kitchen.msgs.slice(kitchenFrom).filter(view((v) => v.ctrlz?.status === "locked"));
+    check(tabletLocked.length > 0 && tabletLocked.every((m) => m.order.ctrlz.price === frozen), `tablet ctrlz.price frozen at $${frozen} (${tabletLocked.length} updates)`);
+
+    // After the timeout the line resumes from the frozen price, not from where it would be without the pause.
+    const T_FLOOR = { fast: 8, normal: 12, slow: 15 };
+    const unpaused = (t) => {
+      const share = Math.min(1, ((t - pub.data.opens_at) * speed) / 60_000 / T_FLOOR[sheet.drop_speed]);
+      return Math.max(sheet.floor_price, Math.floor((sheet.start_price - (sheet.start_price - sheet.floor_price) * share) * 10 + 1e-9) / 10);
+    };
+    check(unlocked.price > unpaused(unlockedAt), `unlocked at $${unlocked.price} > $${unpaused(unlockedAt)} (the line without the pause)`);
+    const next = await seller.waitFor("tick after unlock", (m, i) => m.type === "listing.tick" && m.listing_id === id && seller.msgs.indexOf(m) > unlockedIdx);
+    check(next.price <= frozen && next.price > unpaused(Date.now()), `next tick $${next.price}: ≤ $${frozen} and > $${unpaused(Date.now())}`);
     const buyB2 = await call("POST", `/api/listings/${id}/buy`, undefined, b.token);
     check(buyB2.status === 200 && buyB2.data.kind === "locked", `Bob taps Buy → locked at $${buyB2.data?.price}`);
     winner = { name: "Bob", token: b.token, live: bob, price: buyB2.data.price };
