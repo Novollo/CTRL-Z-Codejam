@@ -91,7 +91,7 @@ function OrderRow({
           onSelect();
         }}
         aria-current={selected}
-        className={`relative grid w-full gap-x-4 gap-y-2 @lg:gap-x-3 px-4 py-4 text-left transition-colors @lg:grid-cols-[76px_minmax(140px,1fr)_auto_80px_68px] @lg:items-center @lg:py-3.5 ${
+        className={`relative grid w-full gap-x-4 gap-y-2 @min-[540px]:gap-x-3 px-4 py-4 text-left transition-colors @min-[540px]:grid-cols-[72px_minmax(110px,1fr)_168px_72px_64px] @min-[540px]:items-center @min-[540px]:py-3.5 ${
           selected ? "bg-mint/70" : "hover:bg-mint/40"
         }`}
       >
@@ -102,7 +102,7 @@ function OrderRow({
         <span className="relative flex items-center gap-2.5">
           <StatusDot status={order.status} />
           <span className="font-mono text-body font-bold text-ink">{order.short_code}</span>
-          <span className="ml-auto font-mono text-body font-bold text-ink @lg:hidden">{formatPrice(order.food_price)}</span>
+          <span className="ml-auto font-mono text-body font-bold text-ink @min-[540px]:hidden">{formatPrice(order.food_price)}</span>
         </span>
 
         {/* customer + items */}
@@ -114,15 +114,15 @@ function OrderRow({
         </span>
 
         {/* fulfilment + Ctrl+Z */}
-        <span className="relative flex flex-wrap items-center gap-1.5 @lg:flex-col @lg:items-end">
+        <span className="relative flex flex-wrap items-center gap-1.5 @min-[540px]:flex-col @min-[540px]:items-end">
           <FulfilmentSwap order={order} showNote={false} compact />
           <CtrlzBadge order={order} />
         </span>
 
         {/* status (wide) */}
-        <span className="relative hidden text-small font-semibold text-ink @lg:block">{STATUS_LABEL[order.status]}</span>
+        <span className="relative hidden text-small font-semibold text-ink @min-[540px]:block">{STATUS_LABEL[order.status]}</span>
         {/* total (wide) */}
-        <span className="relative hidden text-right font-mono text-body font-bold text-ink @lg:block">{formatPrice(order.food_price)}</span>
+        <span className="relative hidden text-right font-mono text-body font-bold text-ink @min-[540px]:block">{formatPrice(order.food_price)}</span>
       </button>
     </li>
   );
@@ -154,9 +154,9 @@ export function OrderList({
   }
   return (
     <div className="@container">
-      <div className="hidden grid-cols-[76px_minmax(140px,1fr)_auto_80px_68px] gap-x-3 border-b border-line px-4 pb-2 pt-3 text-small font-semibold text-stone @lg:grid">
+      <div className="hidden grid-cols-[72px_minmax(110px,1fr)_168px_72px_64px] gap-x-3 border-b border-line px-4 pb-2 pt-3 text-small font-semibold text-stone @min-[540px]:grid">
         <span>Order</span>
-        <span>Customer and items</span>
+        <span>Customer</span>
         <span className="text-right">Fulfilment</span>
         <span>Status</span>
         <span className="text-right">Total</span>
