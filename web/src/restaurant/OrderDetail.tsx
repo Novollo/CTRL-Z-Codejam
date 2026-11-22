@@ -16,7 +16,7 @@ function Callout({ order }: { order: RestaurantOrderView }) {
         <div>
           <p className="font-semibold">Order changed hands</p>
           <p className="mt-0.5 text-small text-white/80">
-            {c.sold_price ? `Resold on Ctrl+Z Eats for ${formatPrice(c.sold_price)}.` : "Taken for free on Ctrl+Z Eats."} Give it to{" "}
+            Resold on Ctrl+Z Eats. Give it to{" "}
             {order.customer_name} with the new code only.
           </p>
         </div>
@@ -33,14 +33,6 @@ function Callout({ order }: { order: RestaurantOrderView }) {
           </p>
           {c.status === "draft" && <p className="mt-0.5 text-small text-stone">Keep preparing as normal.</p>}
           {c.status === "locked" && <p className="mt-1 text-small font-semibold text-ink">A buyer is paying right now.</p>}
-          {c.status !== "draft" && c.price !== null && (
-            <p className="mt-1 text-small text-stone">
-              Price on Ctrl+Z Eats now{" "}
-              <span key={c.price} className="ui-price-drop inline-block font-mono font-bold text-ink">
-                {formatPrice(c.price)}
-              </span>
-            </p>
-          )}
         </div>
       </div>
     );
@@ -167,9 +159,12 @@ export function OrderDetail({
                       <span className="font-mono text-body text-ink">{formatPrice(it.price)}</span>
                     </li>
                   ))}
-                  <li className="flex items-center justify-between px-4 py-3">
-                    <span className="font-semibold text-ink">Food total</span>
-                    <span className="font-mono text-body font-bold text-ink">{formatPrice(order.food_price)}</span>
+                  <li className="px-4 py-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-ink">Order total</span>
+                      <span className="font-mono text-body font-bold text-ink">{formatPrice(order.total)}</span>
+                    </div>
+                    <p className="mt-0.5 text-small text-stone">Paid in full on the delivery app</p>
                   </li>
                 </ul>
               </div>
