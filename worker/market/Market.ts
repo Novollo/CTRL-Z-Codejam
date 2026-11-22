@@ -110,7 +110,7 @@ export class Market extends DurableObject<Env> {
     const listing = await getOpenListingForOrder(this.db, orderId);
     if (!listing || listing.status === "draft") return;
     const now = Date.now();
-    sendOne(ws, { type: "listing.tick", listing_id: listing.id, price: this.price(listing, now), seconds_left: this.secondsLeft(listing, now) });
+    sendOne(ws, { type: "listing.tick", listing_id: listing.id, price: await this.price(listing, now), seconds_left: this.secondsLeft(listing, now) });
     const c = await this.load(listing.id, listing);
     if (c) await this.sendStats(c, now);
     if (listing.status === "locked" && listing.lock_until) {
@@ -134,7 +134,7 @@ export class Market extends DurableObject<Env> {
       const c = await this.load(row.listing_id);
       if (!c) continue;
       const walk = walkMinutes(buyer, c.restaurant, await getWalkTable(this.db, c.restaurant.id));
-      sendOne(ws, { type: "ping", listing: this.card(c, now, walk), reason: row.reason });
+      sendOne(ws, { type: "ping", listing: await this.card(c, now, walk), reason: row.reason });
     }
     await this.matchBuyer(buyerId);
   }
@@ -190,7 +190,7 @@ export class Market extends DurableObject<Env> {
     const live: Listing = { ...c.listing, status: "live", floor_price: floorPrice, fallback: fb, opens_at: now, closes_at: closesAt };
     return {
       status: 200,
-      body: { listing_id: listingId, status: "live", price: this.price(live, now), opens_at: now, closes_at: closesAt, seconds_left: this.secondsLeft(live, now) },
+      body: { listing_id: listingId, status: "live", price: await this.price(live, now), opens_at: now, closes_at: closesAt, seconds_left: this.secondsLeft(live, now) },
     };
   }
 
@@ -261,7 +261,7 @@ export class Market extends DurableObject<Env> {
     if (listing.status === "sold") return { status: 409, body: { error: "taken", lock_until: null } };
     if (listing.status !== "live") return fail(410, "listing has ended");
 
-    const price = this.price(listing, now);
+    const price = await this.price(listing, now);
     const lockUntil = now + LOCK_SEC * 1000; // real time, never sped up (R8)
     const res = await this.db
       .prepare("UPDATE listings SET status = 'locked', locked_by = ?, lock_until = ? WHERE id = ? AND status = 'live'")
@@ -294,6 +294,7 @@ export class Market extends DurableObject<Env> {
           this.db.prepare("UPDATE listings SET status = 'live', locked_by = NULL, lock_until = NULL WHERE id = ? AND status = 'locked' AND locked_by = ?").bind(listingId, buyerId),
           this.db.prepare("UPDATE payments SET status = 'expired' WHERE listing_id = ? AND buyer_id = ? AND status = 'pending'").bind(listingId, buyerId),
         ]);
+        await this.addPause(listingId, lockUntil, Date.now());
         return fail(502, "payment is not available right now");
       }
     }
@@ -317,7 +318,7 @@ export class Market extends DurableObject<Env> {
       .prepare("SELECT reason FROM pings WHERE listing_id = ? AND buyer_id = ? AND reason != '' LIMIT 1")
       .bind(listingId, buyerId)
       .first<{ reason: string }>();
-    const card = this.card(c, now, walk);
+    const card = await this.card(c, now, walk);
     const reason = ping?.reason ?? matchReason({ ...buyer, notify_on: true }, c.listing, card.price, walk, true) ?? "";
     return { status: 200, body: { listing: card, reason, buyer_id: buyerId } };
   }
@@ -344,7 +345,7 @@ export class Market extends DurableObject<Env> {
       .prepare("SELECT amount FROM payments WHERE listing_id = ? AND buyer_id = ? ORDER BY rowid DESC LIMIT 1")
       .bind(listingId, buyerId)
       .first<{ amount: number }>();
-    const price = pending?.amount ?? amount ?? this.price(listing, now);
+    const price = pending?.amount ?? amount ?? await this.price(listing, now);
 
     const res = await this.db
       .prepare(
@@ -380,6 +381,8 @@ export class Market extends DurableObject<Env> {
       this.db.prepare("UPDATE orders SET status = 'preparing', ready_at = ?").bind(readyAt),
     ]);
     this.lastPrice.clear();
+    const pauses = await this.ctx.storage.list({ prefix: "paused:" });
+    await this.ctx.storage.delete([...pauses.keys()]);
     await this.ctx.storage.deleteAlarm();
     const { results } = await this.db.prepare("SELECT id FROM orders").all<{ id: string }>();
     for (const { id } of results) this.send(`seller:${id}`, { type: "order.status", order_id: id, status: "preparing" });
@@ -487,7 +490,7 @@ export class Market extends DurableObject<Env> {
     const listing = row ? toListing(row) : null;
     const winner = listing?.status === "sold" && listing.buyer_id ? await getBuyer(this.db, listing.buyer_id) : null;
     const price = !listing ? null
-      : listing.status === "live" || listing.status === "locked" ? this.price(listing, now)
+      : listing.status === "live" || listing.status === "locked" ? await this.price(listing, now)
       : listing.status === "free" ? 0
       : null;
     return buildOrderView(order, listing, winner, await this.orderRecord(order.id), price);
@@ -551,7 +554,7 @@ export class Market extends DurableObject<Env> {
       c = (await this.load(c.listing.id))!;
     }
 
-    const price = this.price(c.listing, now);
+    const price = await this.price(c.listing, now);
     const tick: LiveMessage = { type: "listing.tick", listing_id: c.listing.id, price, seconds_left: this.secondsLeft(c.listing, now) };
     await this.sendToWatchers(c, tick, tick);
 
@@ -567,9 +570,10 @@ export class Market extends DurableObject<Env> {
       .bind(c.listing.id, now)
       .run();
     if (res.meta.changes !== 1) return;
+    if (c.listing.lock_until) await this.addPause(c.listing.id, c.listing.lock_until, now);
     await this.expirePendingPayments(c.listing.id);
     const live: Listing = { ...c.listing, status: "live", locked_by: null, lock_until: null };
-    const msg: LiveMessage = { type: "listing.unlocked", listing_id: c.listing.id, lock_until: null, price: this.price(live, now) };
+    const msg: LiveMessage = { type: "listing.unlocked", listing_id: c.listing.id, lock_until: null, price: await this.price(live, now) };
     await this.sendToWatchers(c, msg, msg);
     await this.event(c.order.id, "Payment timed out: back on the market", "info");
   }
@@ -731,7 +735,7 @@ export class Market extends DurableObject<Env> {
       const c = await this.load(listing.id, listing);
       if (!c || (await this.pingedBuyers(listing.id)).has(buyerId)) continue;
       const walk = walkMinutes(buyer, c.restaurant, await getWalkTable(this.db, c.restaurant.id));
-      const price = this.price(listing, now);
+      const price = await this.price(listing, now);
       const reason = matchReason(buyer, listing, price, walk, listing.status === "free");
       if (reason && (await this.ping(c, buyer, reason, walk, now))) await this.sendStats(c, now);
     }
@@ -749,7 +753,7 @@ export class Market extends DurableObject<Env> {
       .run();
     if (res.meta.changes !== 1) return false;
 
-    const card = this.card(c, now, walk);
+    const card = await this.card(c, now, walk);
     if (channel === "web") {
       this.send(`buyer:${buyer.id}`, { type: "ping", listing: card, reason });
       return true;
@@ -827,19 +831,36 @@ export class Market extends DurableObject<Env> {
     return restaurant ? { listing, order, restaurant } : null;
   }
 
-  /** The live price: 0 in the free window, else the falling line, never above the last price sent (R7). */
-  private price(listing: Listing, now: number): number {
+  /**
+   * The live price: 0 in the free window, else the falling line, never above the last price sent (R7).
+   * While somebody pays (locked), the price is FROZEN at the moment of the tap. Each lock is a pause:
+   * the line resumes after it from t = now − opens_at − paused, so it goes on from the frozen price.
+   * The countdown (closes_at) never pauses.
+   */
+  private async price(listing: Listing, now: number): Promise<number> {
     if (listing.status === "free") return 0;
-    const price = Math.min(priceAt(listing, now, this.speed), this.lastPrice.get(listing.id) ?? Infinity);
+    const paused = await this.pausedMs(listing.id);
+    const at = listing.status === "locked" && listing.lock_until ? Math.min(now, lockStart(listing.lock_until)) : now;
+    const price = Math.min(priceAt(listing, at - paused, this.speed), this.lastPrice.get(listing.id) ?? Infinity);
     this.lastPrice.set(listing.id, price);
     return price;
+  }
+
+  private async pausedMs(listingId: string): Promise<number> {
+    return (await this.ctx.storage.get<number>(`paused:${listingId}`)) ?? 0;
+  }
+
+  /** A lock ended without a sale: the time it was frozen is added to the listing's pause. */
+  private async addPause(listingId: string, lockUntil: number, now: number): Promise<void> {
+    const extra = Math.max(0, now - lockStart(lockUntil));
+    await this.ctx.storage.put(`paused:${listingId}`, (await this.pausedMs(listingId)) + extra);
   }
 
   private secondsLeft(listing: Listing, now: number): number {
     return storySecondsLeft(listing.closes_at ?? now, now, this.speed);
   }
 
-  private card(c: Ctx, now: number, walk: number | null): ListingCard {
+  private async card(c: Ctx, now: number, walk: number | null): Promise<ListingCard> {
     const { listing, order, restaurant } = c;
     return {
       listing_id: listing.id,
@@ -853,7 +874,7 @@ export class Market extends DurableObject<Env> {
       may_contain: listing.may_contain,
       food_price: order.food_price,
       items: order.items,
-      price: this.price(listing, now),
+      price: await this.price(listing, now),
       seconds_left: this.secondsLeft(listing, now),
       status: listing.status === "locked" || listing.status === "free" ? listing.status : "live",
       lock_until: listing.status === "locked" ? listing.lock_until : null,
@@ -869,5 +890,8 @@ function sendOne(ws: WebSocket, msg: LiveMessage): void {
     // the screen went away
   }
 }
+
+/** When the lock started (the tap), from its end time. */
+const lockStart = (lockUntil: number): number => lockUntil - LOCK_SEC * 1000;
 
 const isFallback = (value: unknown): value is Fallback => FALLBACKS.some((f) => f.key === value);
