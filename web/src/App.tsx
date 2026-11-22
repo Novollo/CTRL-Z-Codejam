@@ -6,6 +6,7 @@ import { StagePage } from "./stage/StagePage";
 import { AdminPage } from "./stage/admin/AdminPage";
 import { DemoPage } from "./stage/DemoPage";
 import { RestaurantApp } from "./restaurant/RestaurantApp";
+import { SoundCheck } from "./ui/SoundCheck";
 
 export function App() {
   const path = window.location.pathname.replace(/\/+$/, "") || "/";
@@ -18,6 +19,7 @@ export function App() {
   if (path === "/admin") return <AdminPage />;
   if (path === "/demo") return <DemoPage />;
   if (path === "/restaurant") return <RestaurantApp />;
+  if (path === "/sounds") return <SoundCheck />;
 
   return (
     <main className="mx-auto max-w-md p-6">
