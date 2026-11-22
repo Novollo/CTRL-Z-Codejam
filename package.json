@@ -8,7 +8,8 @@
   "scripts": {
     "dev": "npm run build && concurrently -k -n worker,web -c green,blue \"wrangler dev --port 8787\" \"vite\"",
     "build": "vite build",
-    "typecheck": "tsc -p tsconfig.json && tsc -p web/tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json && tsc -p web/tsconfig.json && tsc -p extension/tsconfig.json",
+    "extension:build": "node extension/build.mjs",
     "db:local": "wrangler d1 migrations apply ctrlz-eats --local && wrangler d1 execute ctrlz-eats --local --file shared/db/seed.sql",
     "db:remote": "wrangler d1 migrations apply ctrlz-eats --remote && wrangler d1 execute ctrlz-eats --remote --file shared/db/seed.sql",
     "deploy": "npm run build && wrangler deploy",

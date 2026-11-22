@@ -6,6 +6,7 @@ import type { Env } from "../env";
 import { toRestaurant } from "../market/db";
 import { admin } from "./admin";
 import { buyer } from "./buyer";
+import { importOrder } from "./importOrder";
 import { restaurant } from "./restaurant";
 import { seller } from "./seller";
 import { webhooks } from "./webhooks";
@@ -33,6 +34,7 @@ api.get("/restaurants", async (c) => {
   return c.json<RestaurantsResponse>({ restaurants: results.map(toRestaurant) });
 });
 
+api.route("/", importOrder); // track F: the Chrome extension (before seller, so /orders/import is not /orders/:id)
 api.route("/", seller);
 api.route("/", buyer);
 api.route("/", webhooks);

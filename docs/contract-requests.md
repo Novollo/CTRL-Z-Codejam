@@ -5,6 +5,15 @@ Format: `- [ ] [track X] what you need · why · date`.
 
 ## Open requests
 
+- [x] **Approved by the lead (Nov 21), built by track F:** option (b), unknown restaurants keep their real name. [track F] New endpoint `POST /api/orders/import` for the Chrome extension · Nov 21
+  - **What:** body `{ source: "doordash", restaurant_name, items: {name, qty, price}[], food_price, demo: boolean }` → `{ order_id, restaurant_id }`. Creates an order row: `status = "preparing"`, `type = "pickup"`, `pickup_code = makePickupCode()`, `ready_at` = now + 4 story min (same as reset/`freshReadyAt`), `fees` all 0, `total = food_price`, `customer_name = "Demo customer"` (the extension never sends the real name). Items with qty > 1 are saved as "2 x Name" with the line price. `food_price` is recomputed on the server as the sum of items (R7), rounded with `roundPrice`.
+  - **Restaurant:** match `restaurant_name` to a seeded restaurant by name, ignoring case and punctuation ("Tim Hortons" → `r_timhortons`). No match → the lead picks: (a) use `DEMO_RESTAURANT_ID` (buyers see "Five Guys"), or (b) add a restaurant row with the scraped name, copying Five Guys' location, walk times and defaults, so buyers see the real name.
+  - **Also needed:** `originOf` in `worker/api/util.ts` must ignore a `chrome-extension://` Origin and use the request URL instead. Otherwise publish saves that origin and the Telegram "Buy now" links break.
+  - **CORS:** not needed. The extension sends every request and the live connection from its background worker, which Chrome allows through the host permissions.
+  - **Then** the existing flow runs unchanged: `API.undo` → `API.publish` → `API.wsSeller`.
+  - **Where:** new file `worker/api/importOrder.ts`, mounted in `worker/api/index.ts`; path `importOrder: () => "/api/orders/import"` in `API` (`shared/api.ts`), plus `ImportOrderRequest` / `ImportOrderResponse` types there.
+  - **Why:** the market only knows seeded orders. A DoorDash order must be created before the agent can run on it.
+
 - [x] **Approved and done by the lead (Nov 21):** set when the order changed hands. [track E] `previous_customer_name: string | null` on `RestaurantOrderView` (next to `previous_pickup_code`) · The handover must show "Alex → Sarah" with the old name crossed out, but after a sale the view only carries the new name. Today the tablet remembers the old name itself (in memory + localStorage) from the moment it saw the order before the sale, so it works if the tablet was open before the sale, but not after a fresh load on another device. Track C would set it to `orders.customer_name` when the buyer takes over. · Nov 21
 
 ## Answered requests
