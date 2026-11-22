@@ -114,7 +114,7 @@ export function SellerApp() {
       });
       setScreen("live");
       setBurst((b) => b + 1);
-      sound.success(); // once when listed (round 3)
+      sound.listed(); // once when listed (round 7)
       haptic.success();
       disconnect();
       stopLiveRef.current = connectSeller((msg) => onLiveMessage(sheet.listing_id, msg));

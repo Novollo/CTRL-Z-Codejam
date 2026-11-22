@@ -17,7 +17,7 @@ export function SoldScreen({ soldPrice, orderTotal, pickupBy, onHome }: { soldPr
   const [counted, setCounted] = useState(false);
 
   useEffect(() => {
-    sound.cash(); // once on sold (round 3)
+    sound.purchased(); // once on sold (round 7)
     haptic.success();
     const t = setTimeout(() => setCounted(true), COUNT_MS + 100);
     return () => clearTimeout(t);

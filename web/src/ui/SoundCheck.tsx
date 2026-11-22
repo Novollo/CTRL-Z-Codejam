@@ -2,13 +2,9 @@
 import { MuteButton } from "./MuteButton";
 import { sound } from "./sound";
 
-const CUES: { key: keyof typeof sound; label: string; when: string }[] = [
-  { key: "tap", label: "Tap", when: "A button press" },
-  { key: "ping", label: "Ping", when: "A new offer arrives (buyer)" },
-  { key: "lock", label: "Lock", when: "“It's yours for 1 minute”" },
-  { key: "success", label: "Success", when: "Listed (seller) / paid (buyer)" },
-  { key: "cash", label: "Cash", when: "Sold: money back (seller)" },
-  { key: "lost", label: "Lost", when: "Someone else got it (buyer)" },
+const CUES: { key: "listed" | "purchased"; label: string; when: string }[] = [
+  { key: "listed", label: "Order listed", when: "The seller taps \u201cList it\u201d" },
+  { key: "purchased", label: "Order purchased", when: "Seller sees \u201cSold!\u201d, buyer sees the pickup pass" },
 ];
 
 export function SoundCheck() {
@@ -18,7 +14,7 @@ export function SoundCheck() {
         <h1 className="text-h1 text-ink">Sound check</h1>
         <MuteButton />
       </div>
-      <p className="mt-2 text-small text-stone">Tap each one. Each sound has a short cooldown, so wait a second before replaying it.</p>
+      <p className="mt-2 text-small text-stone">Only these two moments make a sound. Each has a short cooldown, so wait a few seconds before replaying it.</p>
       <ul className="mt-6 space-y-3">
         {CUES.map((c) => (
           <li key={c.key}>
@@ -26,7 +22,7 @@ export function SoundCheck() {
               type="button"
               onClick={() => {
                 sound.unlock();
-                (sound[c.key] as () => void)();
+                sound[c.key]();
               }}
               className="ui-press flex w-full items-center justify-between rounded-card border border-line bg-white px-4 py-3 text-left"
             >

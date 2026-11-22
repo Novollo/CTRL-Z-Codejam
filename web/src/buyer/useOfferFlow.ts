@@ -94,7 +94,7 @@ export function useOfferFlow(token: string | null) {
       haptic.medium();
     } else if (cue === "pass") {
       if (quiet.current) return;
-      sound.success();
+      sound.purchased();
       haptic.success();
     }
   }, [cue]);
