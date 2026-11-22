@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Ctrl+Z Eats</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; }
+      body { width: 300px; padding: 16px; font: 14px/1.4 'Inter', system-ui, sans-serif; color: #111111; background: #FFFFFF; }
+      header { display: flex; align-items: center; gap: 8px; }
+      header img { width: 40px; height: 34px; object-fit: contain; }
+      h1 { font-size: 16px; font-weight: 800; color: #1E5631; display: flex; gap: 4px; align-items: center; }
+      .key { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 5px; border: 1.5px solid currentColor; border-radius: 6px; font: 700 12px 'JetBrains Mono', ui-monospace, monospace; box-shadow: 0 1.5px 0 currentColor; }
+      h2 { margin-top: 18px; font-size: 12px; font-weight: 700; color: #6B6B6B; text-transform: uppercase; letter-spacing: 0.04em; }
+      label.choice { display: flex; gap: 8px; align-items: flex-start; margin-top: 8px; cursor: pointer; }
+      label.choice input { accent-color: #1E5631; margin-top: 3px; }
+      small { display: block; color: #6B6B6B; font-size: 12px; }
+      .toggle { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding: 10px 12px; border-radius: 12px; background: #EEF7EA; cursor: pointer; }
+      .toggle input { width: 18px; height: 18px; accent-color: #1E5631; }
+      #status { margin-top: 12px; font-size: 12px; color: #6B6B6B; }
+      #status.ok { color: #1E5631; }
+      .foot { margin-top: 16px; font-size: 11px; color: #6B6B6B; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <img src="img/mark.webp" alt="" />
+      <h1><span class="key">Ctrl</span>+<span class="key">Z</span> Eats</h1>
+    </header>
+
+    <h2>Server</h2>
+    <div id="servers"></div>
+    <p id="status"></p>
+
+    <h2>Demo</h2>
+    <label class="toggle">
+      <span><strong>Demo mode</strong><small>Show the button on any order page, even past orders.</small></span>
+      <input type="checkbox" id="demo" />
+    </label>
+
+    <p class="foot">Hackathon demo. Not made by or connected to any delivery app. Nothing is cancelled on the delivery site.</p>
+    <script src="build/popup.js"></script>
+  </body>
+</html>

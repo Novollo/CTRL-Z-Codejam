@@ -6,7 +6,7 @@
 .env.*
 
 # Build output and tools
-node_modules/
+node_modules
 web/dist/
 dist/
 .wrangler/
@@ -15,3 +15,6 @@ dist/
 
 # Mac
 .DS_Store
+
+# Track F: saved DoorDash pages hold personal data, never commit
+extension/fixtures/

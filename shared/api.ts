@@ -45,6 +45,7 @@ export const API = {
   restaurantReady: (orderId: string) => `/api/restaurant/orders/${orderId}/ready`,      // POST (round 4) "Mark ready"
   restaurantPickedUp: (orderId: string) => `/api/restaurant/orders/${orderId}/picked-up`, // POST (round 4) "Picked up"
   wsRestaurant: (restaurantId: string) => `/ws?role=restaurant&restaurant=${encodeURIComponent(restaurantId)}`,                              // GET  (round 2: logos for the buyer side)                                        // GET  (is the Worker + DB up?)
+  importOrder: () => `/api/orders/import`,                            // POST (track F: Chrome extension, lead approved Nov 21)
   // Live connection
   wsSeller: (orderId: string) => `/ws?role=seller&order=${encodeURIComponent(orderId)}`,
   wsBuyer: (buyerId: string) => `/ws?role=buyer&id=${encodeURIComponent(buyerId)}`,
@@ -81,6 +82,19 @@ export interface UndoResponse {
   fallback: Fallback;        // default "free"
   order_type: OrderType;     // "delivery" → show the yellow warning (S3.4)
   agent_source: AgentSource;
+}
+
+/** POST /api/orders/import (track F). An order read from a delivery site page; names, quantities and prices only. */
+export interface ImportOrderRequest {
+  source: "doordash";
+  restaurant_name: string;
+  items: { name: string; qty: number; price: number }[]; // price = line price in dollars
+  food_price: number;      // sum of items, no fees (R7). The server recomputes it.
+  demo: boolean;           // the extension's demo mode was on
+}
+export interface ImportOrderResponse {
+  order_id: string;        // a new "preparing" pickup order: then API.undo → API.publish → API.wsSeller
+  restaurant_id: string;   // seeded match by name, or a new row with the real name
 }
 
 /** POST /api/listings/:id/publish */
