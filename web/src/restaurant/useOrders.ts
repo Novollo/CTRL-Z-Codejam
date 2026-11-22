@@ -214,5 +214,8 @@ export function useOrders() {
     },
   };
 
-  return { mode, restaurant, orders, flashes, lastMoment, previousName: (id: string) => names[id] ?? null, busy, setStatus, sim };
+  /** The crossed-out name after a handover: from the engine; the name remembered here is only a fallback. */
+  const previousName = (id: string) => orders.find((o) => o.order_id === id)?.previous_customer_name ?? names[id] ?? null;
+
+  return { mode, restaurant, orders, flashes, lastMoment, previousName, busy, setStatus, sim };
 }
