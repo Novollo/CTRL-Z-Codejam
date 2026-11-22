@@ -893,8 +893,7 @@ label.field { display: block; margin-top: 14px; font-size: 12px; font-weight: 70
             if (m.outcome === "free_window") {
               state.textContent = "Nobody bought it, so it's now free for someone nearby. You'll get a thank-you when it's taken.";
               price.textContent = formatPrice(0);
-            } else if (m.outcome === "donated") end(h("p", { class: "big" }, "Thanks!"), "Thanks! Your meal is set aside for donation.");
-            else if (m.outcome === "stopped") end(h("p", { class: "big" }, "Stopped"), "Your order is back to normal.");
+            } else if (m.outcome === "stopped") end(h("p", { class: "big" }, "Stopped"), "Your order is back to normal.");
             else end(h("p", { class: "big" }, "Time is up"), `Nobody grabbed it. Your order is waiting at ${restaurant}.`, m.pickup_code ? `Pickup code ${m.pickup_code}` : "");
             break;
         }
