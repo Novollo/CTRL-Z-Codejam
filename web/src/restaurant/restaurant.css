@@ -1,0 +1,50 @@
+/* Restaurant-tablet-only motion. Everything else comes from the shared kit (web/src/ui/ui.css). */
+
+/* A line that draws itself across old text (old name, old code, "Delivery"). */
+.rz-strike { position: relative; display: inline-block }
+.rz-strike::after {
+  content: "";
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  top: 52%;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  transform-origin: left center;
+  animation: rz-strike .45s cubic-bezier(.6, 0, .2, 1) .35s both;
+}
+@keyframes rz-strike { from { transform: scaleX(0) } to { transform: scaleX(1) } }
+
+/* The new value slides in from the right after the old one is crossed out. */
+.rz-swap-in { animation: rz-swap-in .5s cubic-bezier(.2, .9, .3, 1.2) .75s both }
+@keyframes rz-swap-in { from { opacity: 0; transform: translateX(-10px) scale(.9) } to { opacity: 1; transform: none } }
+
+/* The arrow between old and new. */
+.rz-arrow-in { animation: rz-arrow-in .4s ease-out .6s both }
+@keyframes rz-arrow-in { from { opacity: 0; transform: translateX(-6px) } to { opacity: 1; transform: none } }
+
+/* The new pickup code flips in, then glows once. */
+.rz-code-in { animation: rz-code-in .7s cubic-bezier(.2, .9, .3, 1.15) .9s both, rz-glow 1.6s ease-out 1.5s both }
+@keyframes rz-code-in { from { opacity: 0; transform: perspective(400px) rotateX(-80deg) scale(.9) } to { opacity: 1; transform: none } }
+@keyframes rz-glow { 0% { box-shadow: 0 0 0 0 rgb(108 194 74 / .6) } 100% { box-shadow: 0 0 0 16px rgb(108 194 74 / 0) } }
+
+/* Row highlight when something happens to an order. */
+.rz-flash-amber { animation: rz-flash-amber 3s ease-out both }
+.rz-flash-forest { animation: rz-flash-forest 3s ease-out both }
+.rz-flash-leaf { animation: rz-flash-leaf 3s ease-out both }
+@keyframes rz-flash-amber { 0%, 55% { background: rgb(242 169 0 / .18) } 100% { background: transparent } }
+@keyframes rz-flash-forest { 0%, 55% { background: rgb(108 194 74 / .22) } 100% { background: transparent } }
+@keyframes rz-flash-leaf { 0%, 55% { background: rgb(238 247 234 / 1) } 100% { background: transparent } }
+
+/* The banner's progress line: a soft bar that runs once along the bottom. */
+.rz-banner-bar { animation: rz-banner-bar 1.4s cubic-bezier(.2, .8, .2, 1) .2s both; transform-origin: left center }
+@keyframes rz-banner-bar { from { transform: scaleX(0) } to { transform: scaleX(1) } }
+
+/* Detail panel on phones slides in from the right. */
+.rz-slide-in { animation: rz-slide-in .35s cubic-bezier(.2, .8, .2, 1) both }
+@keyframes rz-slide-in { from { opacity: 0; transform: translateX(24px) } to { opacity: 1; transform: none } }
+
+@media (prefers-reduced-motion: reduce) {
+  [class*="rz-"], [class*="rz-"]::after { animation-duration: .001s !important; animation-delay: 0s !important; animation-iteration-count: 1 !important }
+}

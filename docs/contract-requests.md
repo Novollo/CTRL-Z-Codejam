@@ -5,7 +5,7 @@ Format: `- [ ] [track X] what you need · why · date`.
 
 ## Open requests
 
-_(none open)_
+- [ ] [track E] `previous_customer_name: string | null` on `RestaurantOrderView` (next to `previous_pickup_code`) · The handover must show "Alex → Sarah" with the old name crossed out, but after a sale the view only carries the new name. Today the tablet remembers the old name itself (in memory + localStorage) from the moment it saw the order before the sale, so it works if the tablet was open before the sale, but not after a fresh load on another device. Track C would set it to `orders.customer_name` when the buyer takes over. · Nov 21
 
 ## Answered requests
 
