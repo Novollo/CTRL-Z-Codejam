@@ -269,7 +269,10 @@ async function checkHandover(name, code) {
   check(v.customer_name === name && v.pickup_code === code && v.previous_pickup_code === "ZEE-4821" && v.fulfilment === "pickup",
     "tablet handover: buyer's name, new code (old one as previous), pickup, channel ctrlz");
   check(said(v, `New pickup code ${code}`) && said(v, name), "tablet timeline: resold/given free + new pickup code");
-  check((await call("POST", `/api/restaurant/orders/${ORDER}/picked-up`)).status === 409, "Picked up before ready → 409");
+  if (v.status === "preparing") {
+    // Short runs: the food is not ready yet. (Long runs: it became ready on its own at ready_at.)
+    check((await call("POST", `/api/restaurant/orders/${ORDER}/picked-up`)).status === 409, "Picked up before ready → 409");
+  }
   check((await call("POST", `/api/restaurant/orders/${ORDER}/ready`)).status === 200, "tablet: Mark ready");
   await kitchen.waitFor("ready", view((o) => o.status === "ready" && said(o, "Ready for pickup")));
   check((await call("POST", `/api/restaurant/orders/${ORDER}/picked-up`)).status === 200, "tablet: Picked up");
