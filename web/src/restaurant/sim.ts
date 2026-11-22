@@ -21,6 +21,7 @@ export function simStageOrder(step: number, t0: number, newCode: string, price: 
     customer_name: MOCK_ORDER.customer_name,
     items: MOCK_ORDER.items,
     food_price: MOCK_ORDER.food_price,
+    total: MOCK_ORDER.total,
     status: "preparing",
     fulfilment: "delivery",
     channel: "delivery_app",
@@ -43,7 +44,7 @@ export function simStageOrder(step: number, t0: number, newCode: string, price: 
   }
   if (step >= 3) {
     view.ctrlz = { listing_id: MOCK_LISTING_ID, status: "locked", price: simFloorPrice, sold_price: null };
-    timeline.push({ at: at(8), text: `A buyer tapped Buy at $${simFloorPrice.toFixed(2)}: paying now`, kind: "ctrlz" });
+    timeline.push({ at: at(8), text: "A buyer tapped Buy: paying now", kind: "ctrlz" });
   }
   if (step >= 4) {
     view.channel = "ctrlz";

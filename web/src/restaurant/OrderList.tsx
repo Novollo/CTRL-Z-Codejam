@@ -102,7 +102,7 @@ function OrderRow({
         <span className="relative flex items-center gap-2.5">
           <StatusDot status={order.status} />
           <span className="font-mono text-body font-bold text-ink">{order.short_code}</span>
-          <span className="ml-auto font-mono text-body font-bold text-ink @min-[540px]:hidden">{formatPrice(order.food_price)}</span>
+          <span className="ml-auto font-mono text-body font-bold text-ink @min-[540px]:hidden">{formatPrice(order.total)}</span>
         </span>
 
         {/* customer + items */}
@@ -122,7 +122,7 @@ function OrderRow({
         {/* status (wide) */}
         <span className="relative hidden text-small font-semibold text-ink @min-[540px]:block">{STATUS_LABEL[order.status]}</span>
         {/* total (wide) */}
-        <span className="relative hidden text-right font-mono text-body font-bold text-ink @min-[540px]:block">{formatPrice(order.food_price)}</span>
+        <span className="relative hidden text-right font-mono text-body font-bold text-ink @min-[540px]:block">{formatPrice(order.total)}</span>
       </button>
     </li>
   );

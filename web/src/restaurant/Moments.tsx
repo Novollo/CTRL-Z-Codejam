@@ -1,6 +1,5 @@
 // Small pieces of the restaurant tablet: status, fulfilment, channel, and the animated swaps
 // (Delivery → Pickup, old name → new name, old code → new code) plus the two moment banners.
-import { formatPrice } from "@shared/constants";
 import type { Fulfilment, OrderStatus, RestaurantOrderView } from "@shared/types";
 import { Icon, Mascot } from "../ui";
 
@@ -25,13 +24,13 @@ export function ctrlzLabel(o: RestaurantOrderView): string | null {
     case "draft":
       return "Ctrl+Z pressed";
     case "live":
-      return c.price !== null ? `On Ctrl+Z Eats · ${formatPrice(c.price)}` : "On Ctrl+Z Eats";
+      return "On Ctrl+Z Eats";
     case "locked":
       return "Buyer paying now";
     case "free":
-      return "Free on Ctrl+Z Eats";
+      return "On Ctrl+Z Eats";
     case "sold":
-      return c.sold_price ? `Resold · ${formatPrice(c.sold_price)}` : "Taken for free";
+      return "Resold";
     case "closed":
       return "Not resold";
     case "donated":
@@ -224,7 +223,6 @@ export function MomentBanner({
         <div className="min-w-0 flex-1">
           <p className="text-small font-semibold uppercase tracking-wide text-white/70">
             Order <span className="font-mono">{order.short_code}</span>
-            {order.ctrlz?.sold_price ? ` · resold for ${formatPrice(order.ctrlz.sold_price)}` : ""}
           </p>
           <p className="mt-0.5 text-h3 leading-snug">Order changed hands</p>
           <div className="mt-3 grid gap-x-6 gap-y-3 sm:grid-cols-[auto_1fr]">
