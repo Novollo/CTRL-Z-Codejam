@@ -5,6 +5,7 @@ import { MOCK_BUYER, MOCK_BUYER_ID, MOCK_BUYER_TOKEN } from "@shared/mocks/data"
 import { ApiCallError, apiCall } from "../lib/api";
 import { connectLive } from "../lib/live";
 import { OfferScreen } from "./OfferScreen";
+import { PaidPopup, isPaidPopup } from "./PaidPopup";
 import { Onboarding } from "./Onboarding";
 import { PassScreen } from "./PassScreen";
 import { EMPTY_PROFILE, ProfileForm } from "./ProfileForm";
@@ -26,6 +27,11 @@ const toInput = (b: BuyerProfile): BuyerProfileInput => ({
 type View = { kind: "loading" } | { kind: "intro" } | { kind: "form"; initial: BuyerProfileInput } | { kind: "waiting" };
 
 export function JoinPage() {
+  // Inside the Stripe popup (opened from a frame): only "Paid!", no buyer, no live connection.
+  return isPaidPopup() ? <PaidPopup /> : <JoinMain />;
+}
+
+function JoinMain() {
   const [saved, setSaved] = useState<SavedBuyer | null>(loadBuyer);
   const [profile, setProfile] = useState<BuyerProfileInput | null>(null);
   const [view, setView] = useState<View>(saved ? { kind: "loading" } : { kind: "intro" });

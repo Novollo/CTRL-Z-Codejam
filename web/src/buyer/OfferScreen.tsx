@@ -75,8 +75,14 @@ export function OfferScreen({ offer, busy, onBuy, onNotNow, onPay }: Props) {
                 </div>
                 <p className="font-mono text-h2 font-bold text-ink">{formatPrice(offer.price)}</p>
               </div>
+              {offer.paying && (
+                <p className="ui-flow-in mt-5 flex items-center justify-center gap-2 text-center font-semibold text-ink">
+                  <span className="buyer-dot h-2.5 w-2.5 rounded-full bg-amber" />
+                  Finish paying in the Stripe window
+                </p>
+              )}
               <div className="mt-auto pb-6">
-                <BottomButton onClick={onPay} className="buyer-pulse-btn">
+                <BottomButton onClick={onPay} className={offer.paying ? "" : "buyer-pulse-btn"}>
                   Pay {formatPrice(offer.price)}
                 </BottomButton>
               </div>
