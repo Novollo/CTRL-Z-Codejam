@@ -6,7 +6,7 @@
 //   <BrandLogo variant="mark" />      the bird only (small spaces)
 export function BrandLogo({ variant = "full", height = 32, className = "" }: { variant?: "full" | "mark"; height?: number; className?: string }) {
   const src = variant === "full" ? "/img/brand/logo.webp" : "/img/brand/mark.webp";
-  const ratio = variant === "full" ? 2519 / 718 : 864 / 718;
+  const ratio = variant === "full" ? 2518 / 716 : 863 / 716;
   return (
     <img
       src={src}
