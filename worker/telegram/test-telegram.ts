@@ -5,7 +5,7 @@
 
 import type { ListingCard } from "@shared/types";
 import { testEnv } from "../agent/test-env";
-import { TEXT, editTelegramPing, handleTelegramUpdate, sendTelegramPing } from "./index";
+import { BOT_COMMANDS, TEXT, editTelegramPing, handleTelegramUpdate, sendTelegramPing } from "./index";
 
 const CHAT = 990001; // made-up chat id, removed at the end
 let failed = 0;
@@ -48,6 +48,13 @@ async function main() {
 
     console.log("\n== Sample updates ==");
     await run(msg("/start"));
+    const cmds = sent.filter((s) => s.method === "setMyCommands");
+    check(
+      "first update registers the command menu",
+      cmds.length === 1 && JSON.stringify(cmds[0].body.commands) === JSON.stringify(BOT_COMMANDS),
+      JSON.stringify((cmds[0]?.body.commands as { command: string }[] | undefined)?.map((c) => "/" + c.command)),
+    );
+    check("command menu: /settings, /on, /off, /stop", BOT_COMMANDS.map((c) => `/${c.command} ${c.description}`).join(" | ") === "/settings Change your settings | /on Pings on | /off Pause pings | /stop Delete my profile");
     check("/start → welcome text", texts()[0] === TEXT.welcome, JSON.stringify(texts()[0]));
     check("/start → asks first name", texts()[1] === TEXT.askName);
     check("/start → buyer row created, pings off", (await row())?.name === "" && (await row())?.notify_on === 0);
@@ -55,6 +62,8 @@ async function main() {
     await run(msg("Sarah"));
     check("name saved", (await row())?.name === "Sarah");
     check("then shows the settings menu", sent[0]?.body.reply_markup !== undefined, JSON.stringify(texts()[0]));
+    check("menu ends with \"Change these any time with /settings\"", texts()[0]?.endsWith("\nChange these any time with /settings"));
+    check("command menu is not registered again", !sent.some((s) => s.method === "setMyCommands"));
 
     await run(msg("/on"));
     check("/on → \"Pings on 🟢\"", texts()[0] === "Pings on 🟢" && (await row())?.notify_on === 1);
@@ -63,6 +72,23 @@ async function main() {
     check("button opens \"Where are you?\"", sent.some((s) => s.method === "answerCallbackQuery") && texts()[0] === "Where are you?");
     await run(button("s:trottier"));
     await run(button("w:10"));
+
+    // "What do you like?": Anything first, ticked while food_types is empty.
+    const firstFoodButton = () => {
+      const kb = sent.find((s) => s.method === "editMessageText")?.body.reply_markup as { inline_keyboard: { text: string; callback_data: string }[][] } | undefined;
+      return kb?.inline_keyboard[0][0];
+    };
+    await run(button("v:food"));
+    check("food menu: \"✓ Anything\" first when nothing chosen", firstFoodButton()?.text === "✓ Anything" && firstFoodButton()?.callback_data === "f:any", JSON.stringify(firstFoodButton()));
+    await run(button("f:burgers"));
+    check("tap Burgers → Anything unticked", (await row())?.food_types === '["burgers"]' && firstFoodButton()?.text === "Anything");
+    await run(button("f:burgers"));
+    check("untick the last type → back to Anything", (await row())?.food_types === "[]" && firstFoodButton()?.text === "✓ Anything");
+    await run(button("f:burgers"));
+    await run(button("f:sushi"));
+    await run(button("f:any"));
+    check("tap Anything → clears all types", (await row())?.food_types === "[]" && firstFoodButton()?.text === "✓ Anything");
+
     await run(button("f:burgers"));
     await run(button("f:pizza"));
     await run(button("f:pizza")); // toggle off again

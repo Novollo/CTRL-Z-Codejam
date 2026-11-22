@@ -20,8 +20,25 @@ export const TEXT = {
   needStart: "Send /start to begin.",
   location: "Got your location. Walk times now use it.",
   help: "Commands: /settings · /on · /off · /stop",
+  settingsHint: "Change these any time with /settings",
+  anything: "Anything", // same label as the web B1 chip: no food types = anything
   buyNow: "Buy now",
 } as const;
+
+/** The bot's command menu (Telegram's blue "Menu" button and the "/" list). */
+export const BOT_COMMANDS = [
+  { command: "settings", description: "Change your settings" },
+  { command: "on", description: "Pings on" },
+  { command: "off", description: "Pause pings" },
+  { command: "stop", description: "Delete my profile" },
+];
+/** setMyCommands runs once per Worker instance, on its first update (retried only if it failed). */
+let commandsRegistered = false;
+async function registerCommandsOnce(env: Env) {
+  if (commandsRegistered) return;
+  commandsRegistered = true;
+  if (!(await tg(env, "setMyCommands", { commands: BOT_COMMANDS }))) commandsRegistered = false;
+}
 
 /** Max price buttons ($3 to $25, like the B1 slider). */
 const PRICE_CHOICES = [3, 5, 8, 10, 12, 15, 20, 25].filter((p) => p >= BUYER_MAX_PRICE.min && p <= BUYER_MAX_PRICE.max);
@@ -59,6 +76,7 @@ interface BotBuyer {
 
 export const handleTelegramUpdate: HandleTelegramUpdate = async (env, update) => {
   try {
+    await registerCommandsOnce(env);
     const u = (update ?? {}) as TgUpdate;
     if (u.callback_query) return await onButton(env, u.callback_query);
     const msg = u.message ?? u.edited_message;
@@ -95,7 +113,7 @@ async function onText(env: Env, chatId: string, text: string) {
     if (command) return void (await send(env, chatId, TEXT.askName, { force_reply: true }));
     const name = text.replace(/\s+/g, " ").slice(0, 40);
     await updateBuyer(env, buyer.id, { name });
-    return void (await send(env, chatId, menuText({ ...buyer, name }), mainMenu()));
+    return void (await send(env, chatId, `${menuText({ ...buyer, name })}\n${TEXT.settingsHint}`, mainMenu()));
   }
 
   if (command === "/on" || command === "/off") {
@@ -118,7 +136,7 @@ async function onLocation(env: Env, chatId: string, loc: { latitude: number; lon
 }
 
 // ---- Settings buttons (/settings) ---------------------------------------------------
-// callback_data: "v:<view>" opens a view, "s:<spot>", "w:<min>", "f:<type>", "d:<diet>", "p:<price>" change a value.
+// callback_data: "v:<view>" opens a view, "s:<spot>", "w:<min>", "f:<type>" ("f:any" = Anything), "d:<diet>", "p:<price>" change a value.
 
 async function onButton(env: Env, q: NonNullable<TgUpdate["callback_query"]>) {
   await tg(env, "answerCallbackQuery", { callback_query_id: q.id });
@@ -139,8 +157,9 @@ async function onButton(env: Env, q: NonNullable<TgUpdate["callback_query"]>) {
     patch.max_walk_min = buyer.max_walk_min = Number(value);
   } else if (kind === "p" && PRICE_CHOICES.includes(Number(value))) {
     patch.max_price = buyer.max_price = Number(value);
-  } else if (kind === "f" && FOOD_TYPES.some((f) => f.key === value)) {
-    buyer.food_types = toggle(buyer.food_types, value as FoodType);
+  } else if (kind === "f" && (value === "any" || FOOD_TYPES.some((f) => f.key === value))) {
+    // "Anything" clears the list. A type toggles; unticking the last one is Anything again.
+    buyer.food_types = value === "any" ? [] : toggle(buyer.food_types, value as FoodType);
     patch.food_types = JSON.stringify(buyer.food_types);
     view = "food";
   } else if (kind === "d" && BUYER_DIETS.some((d) => d.key === value)) {
@@ -186,7 +205,11 @@ function subMenu(view: string, b: BotBuyer): Keyboard {
   let buttons: Button[] = [];
   if (view === "spot") buttons = CAMPUS_SPOTS.map((s) => ({ text: mark(b.spot === s.key, s.label), callback_data: `s:${s.key}` }));
   if (view === "walk") buttons = WALK_CHOICES_MIN.map((m) => ({ text: mark(b.max_walk_min === m, `${m} min`), callback_data: `w:${m}` }));
-  if (view === "food") buttons = FOOD_TYPES.map((f) => ({ text: mark(b.food_types.includes(f.key), f.label), callback_data: `f:${f.key}` }));
+  if (view === "food")
+    buttons = [
+      { text: mark(b.food_types.length === 0, TEXT.anything), callback_data: "f:any" },
+      ...FOOD_TYPES.map((f) => ({ text: mark(b.food_types.includes(f.key), f.label), callback_data: `f:${f.key}` })),
+    ];
   if (view === "diet") buttons = BUYER_DIETS.map((d) => ({ text: mark(b.diet.includes(d.key), d.label), callback_data: `d:${d.key}` }));
   if (view === "price") buttons = PRICE_CHOICES.map((p) => ({ text: mark(b.max_price === p, `$${p}`), callback_data: `p:${p}` }));
   const rows: Keyboard = [];
@@ -198,7 +221,7 @@ function subMenu(view: string, b: BotBuyer): Keyboard {
 /** "Sarah: Trottier · 10 min walk · Burgers, Pizza · up to $12", like B2. */
 function menuText(b: BotBuyer): string {
   const where = b.lat !== null && b.lng !== null ? "Live location" : (CAMPUS_SPOTS.find((s) => s.key === b.spot)?.label ?? "No spot yet");
-  const food = b.food_types.length ? b.food_types.map((k) => FOOD_TYPES.find((f) => f.key === k)?.label ?? k).join(", ") : "Anything";
+  const food = b.food_types.length ? b.food_types.map((k) => FOOD_TYPES.find((f) => f.key === k)?.label ?? k).join(", ") : TEXT.anything;
   const lines = [`${b.name}: ${where} · ${b.max_walk_min} min walk · ${food} · up to $${b.max_price}`];
   if (b.diet.length) lines.push(`Diet: ${b.diet.map((k) => BUYER_DIETS.find((d) => d.key === k)?.label ?? k).join(", ")}`);
   lines.push(b.notify_on ? TEXT.on : `${TEXT.off}. Send /on to get pings.`);
