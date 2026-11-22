@@ -44,6 +44,7 @@ export function buildOrderView(
     channel: handedOver ? "ctrlz" : "delivery_app",
     pickup_code: handedOver && listing.pickup_code ? listing.pickup_code : order.pickup_code,
     previous_pickup_code: handedOver && listing.pickup_code ? order.pickup_code : null,
+    previous_customer_name: handedOver ? order.customer_name : null,
     ctrlz: listing
       ? { listing_id: listing.id, status: listing.status, price, sold_price: listing.sold_price }
       : null,

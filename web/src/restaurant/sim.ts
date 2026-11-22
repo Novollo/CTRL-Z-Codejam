@@ -26,6 +26,7 @@ export function simStageOrder(step: number, t0: number, newCode: string, price: 
     channel: "delivery_app",
     pickup_code: MOCK_ORDER.pickup_code,
     previous_pickup_code: null,
+    previous_customer_name: null,
     ctrlz: null,
     timeline,
     placed_at: at(-180),
@@ -46,6 +47,7 @@ export function simStageOrder(step: number, t0: number, newCode: string, price: 
   }
   if (step >= 4) {
     view.channel = "ctrlz";
+    view.previous_customer_name = view.customer_name;
     view.customer_name = "Sarah";
     view.previous_pickup_code = MOCK_ORDER.pickup_code;
     view.pickup_code = newCode;

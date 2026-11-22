@@ -177,6 +177,7 @@ export interface RestaurantOrderView {
   channel: OrderChannel;          // "ctrlz" once sold or given free on Ctrl+Z Eats
   pickup_code: string;            // the code that is valid NOW
   previous_pickup_code: string | null; // shown crossed out after the handover
+  previous_customer_name: string | null; // the original customer, crossed out after the handover (track E request)
   ctrlz: null | {                 // set while/after the order is on Ctrl+Z Eats
     listing_id: string;
     status: ListingStatus;
