@@ -8,10 +8,19 @@ import { CtrlzButton } from "./ui/button";
 import { Panel } from "./ui/panel";
 
 const CHECK_EVERY_MS = 400; // at most this often while the page is busy: the button shows well within 2 s
+/** The site's own app (React) must finish starting before we add anything to its page, or it reports errors. */
+const SETTLE_AFTER_LOAD_MS = 800;
+
+const pageSettled = new Promise<void>((resolve) => {
+  const later = () => setTimeout(resolve, SETTLE_AFTER_LOAD_MS);
+  if (document.readyState === "complete") later();
+  else window.addEventListener("load", later, { once: true });
+});
 
 async function main() {
   const reader = readerFor(location.hostname);
   if (!reader) return;
+  await pageSettled;
   let settings: Settings = await getSettings();
   let latest: ScrapedOrder | null = null;
 

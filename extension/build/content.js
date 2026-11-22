@@ -187,7 +187,7 @@
 
   // src/ui/styles.ts
   var CSS = `
-:host { all: initial; }
+:host { all: initial; display: block; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 .root {
   font-family: ${FONTS.ui}; color: ${COLORS.ink}; font-size: 14px; line-height: 1.4;
@@ -209,7 +209,7 @@ input { font: inherit; color: ${COLORS.ink}; }
 @keyframes held { 0% { transform: scale(1); } 40% { transform: scale(0.97); } 100% { transform: scale(1); } }
 
 /* ---- The Ctrl+Z button ---------------------------------------------------- */
-.dock { display: block; width: 100%; max-width: 380px; margin: 12px 0; }
+.dock { display: block; max-width: 380px; margin: 12px 16px 16px; }
 .dock.floating {
   position: fixed; right: 24px; bottom: 24px; width: 320px; margin: 0; z-index: 2147483646;
   background: ${COLORS.white}; border-radius: 16px; padding: 12px;
@@ -833,9 +833,16 @@ label.field { display: block; margin-top: 14px; font-size: 12px; font-weight: 70
 
   // src/content.ts
   var CHECK_EVERY_MS = 400;
+  var SETTLE_AFTER_LOAD_MS = 800;
+  var pageSettled = new Promise((resolve) => {
+    const later = () => setTimeout(resolve, SETTLE_AFTER_LOAD_MS);
+    if (document.readyState === "complete") later();
+    else window.addEventListener("load", later, { once: true });
+  });
   async function main() {
     const reader = readerFor(location.hostname);
     if (!reader) return;
+    await pageSettled;
     let settings = await getSettings();
     let latest = null;
     const panel = new Panel();
