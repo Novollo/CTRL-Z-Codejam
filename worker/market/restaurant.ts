@@ -39,6 +39,7 @@ export function buildOrderView(
     customer_name: handedOver ? winner.name : order.customer_name,
     items: order.items,
     food_price: order.food_price,
+    total: order.total, // round 8: the original delivery-app total, the only price the restaurant sees
     status: order.status,
     fulfilment: order.type === "pickup" || onCtrlz ? "pickup" : "delivery",
     channel: handedOver ? "ctrlz" : "delivery_app",
