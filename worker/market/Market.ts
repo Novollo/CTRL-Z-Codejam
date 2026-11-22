@@ -19,15 +19,20 @@ import {
   DEMO_ORDER_ID, FREE_WINDOW_MIN, LISTING_AFTER_READY_MIN, LOCK_SEC, PICKUP_DEADLINE_MIN, PRICE_TICK_SEC, formatPrice,
 } from "@shared/constants";
 import type { AgentMode } from "@shared/constants";
+import { DEMO_RESTAURANT_ID, makePickupCode } from "@shared/constants";
+import { MOCK_RESTAURANT_QUEUE } from "@shared/mocks/data";
+import type { RestaurantOrdersResponse } from "@shared/api";
 import type { ListingClosedMsg, LiveMessage } from "@shared/messages";
-import type { Buyer, Listing, ListingCard, Order, PickupPass, Restaurant } from "@shared/types";
+import type { Buyer, Listing, ListingCard, Order, PickupPass, Restaurant, RestaurantOrderView, RestaurantTimelineEntry } from "@shared/types";
 import type { Env } from "../env";
 import { editTelegramPing, sendTelegramPing } from "../telegram";
 import { createCheckout } from "../stripe";
 import {
-  MINUTES_UNTIL_READY, freshReadyAt, getActiveBuyers, getActiveListings, getBuyer, getListing, getOpenListingForOrder,
+  MINUTES_UNTIL_READY, freshReadyAt, toListing, toOrder, getActiveBuyers, getActiveListings, getBuyer, getListing, getOpenListingForOrder,
   getOrder, getPass, getRestaurant, getWalkTable,
 } from "./db";
+import { buildOrderView, newOrderRecord } from "./restaurant";
+import type { OrderRecord } from "./restaurant";
 import { clipFloor, demoCrowd, demoSpeed, matchReason, priceAt, storyMinToMs, storySecondsLeft, walkMinutes } from "./rules";
 
 /** What an RPC method returns: the HTTP status and JSON body the API should send. */
@@ -67,13 +72,20 @@ export class Market extends DurableObject<Env> {
     const role = url.searchParams.get("role");
     const orderId = url.searchParams.get("order") || DEMO_ORDER_ID;
     const buyerId = url.searchParams.get("id");
-    if (role !== "seller" && !(role === "buyer" && buyerId)) return new Response("Use ?role=seller&order= or ?role=buyer&id=", { status: 400 });
+    const restaurantId = url.searchParams.get("restaurant") || DEMO_RESTAURANT_ID;
+    if (role !== "seller" && role !== "restaurant" && !(role === "buyer" && buyerId)) {
+      return new Response("Use ?role=seller&order= or ?role=buyer&id= or ?role=restaurant&restaurant=", { status: 400 });
+    }
 
     const pair = new WebSocketPair();
     const [client, server] = [pair[0], pair[1]];
-    this.ctx.acceptWebSocket(server, [role === "seller" ? `seller:${orderId}` : `buyer:${buyerId}`]);
+    const tag = role === "seller" ? `seller:${orderId}` : role === "restaurant" ? `restaurant:${restaurantId}` : `buyer:${buyerId}`;
+    this.ctx.acceptWebSocket(server, [tag]);
 
-    const greet = role === "seller" ? this.greetSeller(server, orderId) : this.greetBuyer(server, buyerId!);
+    const greet =
+      role === "seller" ? this.greetSeller(server, orderId)
+      : role === "restaurant" ? this.greetRestaurant(server, restaurantId)
+      : this.greetBuyer(server, buyerId!);
     this.ctx.waitUntil(greet.catch((e) => console.error("greet failed", e)));
     return new Response(null, { status: 101, webSocket: client });
   }
@@ -171,6 +183,9 @@ export class Market extends DurableObject<Env> {
 
     if (origin) await this.ctx.storage.put("origin", origin); // for Telegram "Buy now" links
     await this.startClock(now); // first tick right away
+    await this.event(c.order.id, `Listed on Ctrl+Z Eats from ${formatPrice(priceAt({ ...c.listing, floor_price: floorPrice, opens_at: now, closes_at: closesAt }, now, this.speed))}`, "ctrlz", false);
+    if (c.order.type === "delivery") await this.event(c.order.id, "Courier released: now pickup", "ctrlz", false); // R3
+    await this.pushOrder(c.order.id);
 
     const live: Listing = { ...c.listing, status: "live", floor_price: floorPrice, fallback: fb, opens_at: now, closes_at: closesAt };
     return {
@@ -207,6 +222,12 @@ export class Market extends DurableObject<Env> {
     this.lastPrice.delete(listingId);
     const msg: ListingClosedMsg = { type: "listing.closed", listing_id: listingId, fallback: c.listing.fallback, outcome: "stopped" };
     await this.sendToWatchers(c, msg, msg);
+    const wasPublished = c.listing.opens_at != null;
+    if (wasPublished) {
+      await this.event(c.order.id, "Customer stopped the resale", "ctrlz", false);
+      if (c.order.type === "delivery") await this.event(c.order.id, "Back to delivery", "info", false);
+    }
+    await this.pushOrder(c.order.id);
     return { status: 200, body: { listing_id: listingId, status: "stopped" } };
   }
 
@@ -279,6 +300,8 @@ export class Market extends DurableObject<Env> {
 
     const locked: LiveMessage = { type: "listing.locked", listing_id: listingId, lock_until: lockUntil };
     await this.sendToWatchers(c, locked, locked);
+    const payer = await getBuyer(this.db, buyerId);
+    await this.event(c.order.id, `${payer?.name ?? "A buyer"} is paying on Ctrl+Z Eats (${formatPrice(price)})`, "info");
     return { status: 200, body: { kind: "locked", checkout_url: checkoutUrl, lock_until: lockUntil, price } };
   }
 
@@ -360,6 +383,10 @@ export class Market extends DurableObject<Env> {
     await this.ctx.storage.deleteAlarm();
     const { results } = await this.db.prepare("SELECT id FROM orders").all<{ id: string }>();
     for (const { id } of results) this.send(`seller:${id}`, { type: "order.status", order_id: id, status: "preparing" });
+    // Fresh timelines ("Order received" now); fulfilment, channel, name and code come back from the rows.
+    const old = await this.ctx.storage.list({ prefix: "order:" });
+    await this.ctx.storage.delete([...old.keys()]);
+    for (const { id } of results) await this.pushOrder(id);
   }
 
   /** /admin "Mark order ready". */
@@ -378,6 +405,92 @@ export class Market extends DurableObject<Env> {
 
   async setAgentMode(mode: AgentMode): Promise<void> {
     await this.ctx.storage.put("agent_mode", mode);
+  }
+
+  // =========================================================================
+  // RPC + live: restaurant tablet (round 4)
+  // =========================================================================
+
+  /** GET /api/restaurant/:id/orders: the real orders (newest first) + the mock queue for Five Guys. */
+  async restaurantOrders(restaurantId: string): Promise<Reply<RestaurantOrdersResponse>> {
+    const restaurant = await getRestaurant(this.db, restaurantId);
+    if (!restaurant) return fail(404, "restaurant not found");
+    const now = Date.now();
+    const real = await Promise.all((await this.ordersOf(restaurantId, true)).map((o) => this.orderView(o, now)));
+    const mock = restaurantId === DEMO_RESTAURANT_ID ? MOCK_RESTAURANT_QUEUE(now) : [];
+    const orders = [...real, ...mock].sort((a, b) => b.placed_at - a.placed_at);
+    return { status: 200, body: { restaurant, orders } };
+  }
+
+  /** POST /api/restaurant/orders/:id/picked-up (only once the food is ready). */
+  async pickedUp(orderId: string): Promise<Reply<OkResponse>> {
+    const order = await getOrder(this.db, orderId);
+    if (!order) return fail(404, "order not found");
+    const res = await this.db.prepare("UPDATE orders SET status = 'picked_up' WHERE id = ? AND status = 'ready'").bind(orderId).run();
+    if (res.meta.changes !== 1) return fail(409, "order is not ready");
+    this.send(`seller:${orderId}`, { type: "order.status", order_id: orderId, status: "picked_up" });
+    const view = await this.orderView({ ...order, status: "picked_up" }, Date.now());
+    await this.event(orderId, `Picked up by ${view.customer_name || "the customer"}`, "done");
+    return { status: 200, body: ok };
+  }
+
+  /** Add a line to an order's timeline (the API uses it for "Customer pressed Ctrl+Z"). */
+  async orderEvent(orderId: string, text: string, kind: RestaurantTimelineEntry["kind"]): Promise<void> {
+    await this.event(orderId, text, kind);
+  }
+
+  private async greetRestaurant(ws: WebSocket, restaurantId: string): Promise<void> {
+    const now = Date.now();
+    for (const order of await this.ordersOf(restaurantId, false)) {
+      sendOne(ws, { type: "restaurant.order", order: await this.orderView(order, now) });
+    }
+  }
+
+  private async ordersOf(restaurantId: string, includePickedUp: boolean): Promise<Order[]> {
+    const { results } = await this.db
+      .prepare(`SELECT * FROM orders WHERE restaurant_id = ?${includePickedUp ? "" : " AND status != 'picked_up'"}`)
+      .bind(restaurantId)
+      .all<Record<string, unknown>>();
+    return results.map(toOrder);
+  }
+
+  private async orderRecord(orderId: string): Promise<OrderRecord> {
+    const stored = await this.ctx.storage.get<OrderRecord>(`order:${orderId}`);
+    if (stored) return stored;
+    const fresh = newOrderRecord(Date.now());
+    await this.ctx.storage.put(`order:${orderId}`, fresh);
+    return fresh;
+  }
+
+  /** Append to the timeline, then (by default) send the new view to the restaurant. */
+  private async event(orderId: string, text: string, kind: RestaurantTimelineEntry["kind"], push = true): Promise<void> {
+    const record = await this.orderRecord(orderId);
+    record.timeline.push({ at: Date.now(), text, kind });
+    await this.ctx.storage.put(`order:${orderId}`, record);
+    if (push) await this.pushOrder(orderId);
+  }
+
+  /** restaurant.order with the full current view, if that restaurant's tablet is open. */
+  private async pushOrder(orderId: string): Promise<void> {
+    const order = await getOrder(this.db, orderId);
+    if (!order) return;
+    const tag = `restaurant:${order.restaurant_id}`;
+    if (this.ctx.getWebSockets(tag).length === 0) return;
+    this.send(tag, { type: "restaurant.order", order: await this.orderView(order, Date.now()) });
+  }
+
+  private async orderView(order: Order, now: number): Promise<RestaurantOrderView> {
+    const row = await this.db
+      .prepare("SELECT * FROM listings WHERE order_id = ? AND opens_at IS NOT NULL ORDER BY rowid DESC LIMIT 1")
+      .bind(order.id)
+      .first<Record<string, unknown>>();
+    const listing = row ? toListing(row) : null;
+    const winner = listing?.status === "sold" && listing.buyer_id ? await getBuyer(this.db, listing.buyer_id) : null;
+    const price = !listing ? null
+      : listing.status === "live" || listing.status === "locked" ? this.price(listing, now)
+      : listing.status === "free" ? 0
+      : null;
+    return buildOrderView(order, listing, winner, await this.orderRecord(order.id), price);
   }
 
   // =========================================================================
@@ -444,6 +557,7 @@ export class Market extends DurableObject<Env> {
 
     if (c.listing.status === "live" || c.listing.status === "free") await this.matchListing(c, now, price);
     await this.sendStats(c, now);
+    await this.pushOrder(c.order.id); // live price on the restaurant tablet
     return true;
   }
 
@@ -457,6 +571,7 @@ export class Market extends DurableObject<Env> {
     const live: Listing = { ...c.listing, status: "live", locked_by: null, lock_until: null };
     const msg: LiveMessage = { type: "listing.unlocked", listing_id: c.listing.id, lock_until: null, price: this.price(live, now) };
     await this.sendToWatchers(c, msg, msg);
+    await this.event(c.order.id, "Payment timed out: back on the market", "info");
   }
 
   /** End of the listing without a sale (9.5). Returns true if it goes on (the free window opened). */
@@ -481,6 +596,7 @@ export class Market extends DurableObject<Env> {
       if (res.meta.changes !== 1) return false;
       const msg: ListingClosedMsg = { ...base, outcome: "free_window", free_until: freeUntil };
       await this.sendToWatchers(c, msg, msg);
+      await this.event(order.id, "Not sold: now free for someone nearby", "ctrlz");
       return true;
     }
 
@@ -500,6 +616,9 @@ export class Market extends DurableObject<Env> {
     this.lastPrice.delete(c.listing.id);
     const { pickup_code: _code, ...forBuyers } = msg;
     await this.sendToWatchers(c, msg, forBuyers);
+    const who = c.order.customer_name || "The customer";
+    const text = msg.outcome === "donated" ? "Not sold: set aside for donation" : `Not resold: ${who} picks it up`;
+    await this.event(c.order.id, text, msg.outcome === "donated" ? "done" : "info");
   }
 
   private async setStatus(listingId: string, from: Listing["status"], to: Listing["status"]): Promise<boolean> {
@@ -519,6 +638,7 @@ export class Market extends DurableObject<Env> {
       .bind(now + storyMinToMs(LISTING_AFTER_READY_MIN, this.speed), order.id)
       .run();
     this.send(`seller:${order.id}`, { type: "order.status", order_id: order.id, status: "ready" });
+    await this.event(order.id, "Ready for pickup", "done");
   }
 
   // =========================================================================
@@ -544,6 +664,11 @@ export class Market extends DurableObject<Env> {
     }
     this.lastPrice.delete(listingId);
 
+    // Round 4: the new owner gets a NEW pickup code; the seller's code stops being the valid one.
+    let code = makePickupCode();
+    while (code === c.order.pickup_code) code = makePickupCode();
+    await this.db.prepare("UPDATE listings SET pickup_code = ? WHERE id = ?").bind(code, listingId).run();
+
     const pass = await getPass(this.db, listingId, buyerId, this.speed);
     const pickupBy = pass?.pickup_by ?? now + storyMinToMs(PICKUP_DEADLINE_MIN, this.speed);
     const sold: LiveMessage = { type: "listing.sold", listing_id: listingId, sold_price: price, pickup_by: pickupBy };
@@ -564,6 +689,11 @@ export class Market extends DurableObject<Env> {
         editTelegramPing(this.env, r.chat_id, r.message_id, `Gone — grabbed at ${formatPrice(price)}`).catch((e) => console.error("editTelegramPing failed", e)),
       ),
     );
+
+    const name = pass?.name_on_order ?? "a buyer";
+    const sale = price > 0 ? `Resold on Ctrl+Z Eats to ${name} for ${formatPrice(price)}` : `Given free on Ctrl+Z Eats to ${name}`;
+    await this.event(c.order.id, sale, "handover", false);
+    await this.event(c.order.id, `New pickup code ${code}`, "handover");
     return pass;
   }
 

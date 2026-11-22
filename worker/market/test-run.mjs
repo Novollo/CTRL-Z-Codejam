@@ -27,6 +27,7 @@ const t0 = Date.now();
 const clock = () => `${((Date.now() - t0) / 1000).toFixed(1).padStart(5)}s`;
 const log = (...parts) => console.log(clock(), ...parts);
 let failures = 0;
+let orderTotal = 0;
 const created = []; // this run's test buyers
 const screens = []; // this run's live connections
 const check = (ok, label) => {
@@ -81,6 +82,12 @@ function live(name, query) {
   return { name, msgs, opened, waitFor, count, close: () => ws.close() };
 }
 
+/** Restaurant tablet (round 4): the newest restaurant.order for the stage order that matches. */
+const NEW_CODE = /^ZEE-[A-HJ-NP-Z2-9]{4}$/;
+const view = (pred) => (m) => m.type === "restaurant.order" && m.order.order_id === ORDER && pred(m.order);
+const said = (v, words) => v.timeline.some((e) => e.text.includes(words));
+let kitchen; // the restaurant socket
+
 const of = (type, listingId) => (m) => m.type === type && (!listingId || m.listing_id === listingId || m.listing?.listing_id === listingId);
 
 // ---- The run ----
@@ -114,18 +121,29 @@ async function main() {
   const seller = live("seller", `role=seller&order=${ORDER}`);
   const alice = live("alice", `role=buyer&id=${a.id}`);
   const bob = live("bob", `role=buyer&id=${b.id}`);
-  screens.push(seller, alice, bob);
-  await Promise.all([seller.opened, alice.opened, bob.opened]);
-  log("3 live connections open (seller, Alice, Bob)");
+  kitchen = live("restaurant", "role=restaurant&restaurant=r_fiveguys");
+  screens.push(seller, alice, bob, kitchen);
+  await Promise.all([seller.opened, alice.opened, bob.opened, kitchen.opened]);
+  log("4 live connections open (seller, Alice, Bob, Five Guys tablet)");
+  const v0 = (await kitchen.waitFor("restaurant.order on connect", view(() => true))).order;
+  check(v0.fulfilment === "delivery" && v0.channel === "delivery_app" && v0.customer_name === "Alex" && v0.pickup_code === "ZEE-4821" && v0.ctrlz === null,
+    `tablet on connect: ${v0.short_code} ${v0.customer_name} · ${v0.fulfilment} · ${v0.channel} · ${v0.pickup_code}`);
   const status0 = await seller.waitFor("order.status", of("order.status"));
   check(status0.status === "preparing", `seller sees order.status "${status0.status}"`);
 
   const order = await call("GET", `/api/orders/${ORDER}`);
   check(order.status === 200 && order.data.order.status === "preparing" && order.data.listing_id === null, "GET order: preparing, no listing");
+  orderTotal = order.data.order.total;
+  check(order.data.order.customer_name === "Alex" && order.data.order.type === "delivery", `GET order: delivery order for ${order.data.order.customer_name}, total $${orderTotal}`);
+  const tablet = await call("GET", "/api/restaurant/r_fiveguys/orders");
+  const ids = tablet.data?.orders?.map((o) => o.order_id) ?? [];
+  check(tablet.status === 200 && tablet.data.restaurant.id === "r_fiveguys" && ids.includes(ORDER) && ids.length >= 3, `GET restaurant orders: ${ids.join(", ")}`);
 
   // Ctrl+Z → agent → draft
   const undo = await call("POST", `/api/orders/${ORDER}/undo`);
   check(undo.status === 200, `undo → draft ${undo.data?.listing_id}`);
+  await kitchen.waitFor("Ctrl+Z on the timeline", view((v) => said(v, "Ctrl+Z")));
+  check(true, 'tablet timeline: "Customer pressed Ctrl+Z"');
   const sheet = undo.data;
   log(`  "${sheet.title}" · start $${sheet.start_price} · floor $${sheet.floor_price} (range $${sheet.floor_min}–$${sheet.floor_max}) · ${sheet.drop_speed} · agent ${sheet.agent_source}`);
   log(`  reason: "${sheet.reason}"`);
@@ -136,6 +154,8 @@ async function main() {
   const fallback = CLOSE ?? "free";
   const pub = await call("POST", `/api/listings/${id}/publish`, { floor_price: sheet.floor_price, fallback });
   check(pub.status === 200 && pub.data.status === "live", `publish (fallback ${fallback}) → live, $${pub.data?.price}, ${pub.data?.seconds_left} story s left`);
+  const v1 = (await kitchen.waitFor("courier released", view((v) => v.fulfilment === "pickup"))).order;
+  check(v1.ctrlz?.status === "live" && said(v1, "Courier released") && v1.customer_name === "Alex", "tablet: delivery → pickup, courier released, still Alex");
   check((await call("POST", `/api/listings/${id}/publish`, { floor_price: 9, fallback })).status === 409, "publish again → 409");
 
   const patch = await call("PATCH", `/api/listings/${id}`, { floor_price: 1 });
@@ -196,15 +216,17 @@ async function main() {
   const soldW = await winner.live.waitFor("listing.sold", of("listing.sold", id));
   const soldL = await loser.live.waitFor("listing.sold", of("listing.sold", id));
   const soldS = await seller.waitFor("listing.sold", of("listing.sold", id));
-  check(soldW.pass?.pickup_code === "ZEE-4821" && soldW.pass.name_on_order === `Test ${winner.name}`, `${winner.name} gets listing.sold WITH the pass (${soldW.pass?.pickup_code})`);
+  const newCode = soldW.pass?.pickup_code;
+  check(NEW_CODE.test(newCode ?? "") && newCode !== "ZEE-4821" && soldW.pass.name_on_order === `Test ${winner.name}`, `${winner.name} gets listing.sold WITH the pass and a NEW code (${newCode})`);
+  await checkHandover(`Test ${winner.name}`, newCode);
   check(!soldL.pass && !soldS.pass, `${loser.name} and the seller get listing.sold WITHOUT the pass`);
   check(soldS.sold_price === winner.price, `sold at the lock price $${soldS.sold_price}`);
   const minutes = Math.round(((soldS.pickup_by - Date.now()) * speed) / 60_000);
   check(minutes >= 29 && minutes <= 30, `pick up by = payment + ${minutes} story min`);
-  log(`  seller S5a: "You got $${soldS.sold_price.toFixed(2)} back." "You undid ${Math.round((soldS.sold_price / 23.46) * 100)}% of your mistake."`);
+  log(`  seller S5a: "You got $${soldS.sold_price.toFixed(2)} back." "You undid ${Math.round((soldS.sold_price / orderTotal) * 100)}% of your mistake."`);
 
   const passW = await call("GET", `/api/listings/${id}/pass`, undefined, winner.token);
-  check(passW.status === 200 && passW.data.pickup_code === "ZEE-4821", `GET pass for ${winner.name} → ${passW.data?.pickup_code}`);
+  check(passW.status === 200 && passW.data.pickup_code === newCode, `GET pass for ${winner.name} → ${passW.data?.pickup_code}`);
   check((await call("GET", `/api/listings/${id}/pass`, undefined, loser.token)).status === 404, `GET pass for ${loser.name} → 404`);
   check((await call("POST", `/api/listings/${id}/buy`, undefined, loser.token)).status === 409, "buy after sold → 409");
   check((await call("POST", `/api/orders/${ORDER}/undo`)).status === 409, "undo a sold order → 409");
@@ -240,6 +262,25 @@ function checkInvariants(...screens) {
   check(all.length > 0 && bad.length === 0, `invariants interested ≥ watching and seen ≥ watching hold in all ${all.length} stats (${bad.length} bad)`);
 }
 
+/** Round 4: the tablet sees the order change hands, then Mark ready and Picked up. */
+async function checkHandover(name, code) {
+  const v = (await kitchen.waitFor("handover", view((o) => o.channel === "ctrlz"))).order;
+  log(`  tablet: ${v.customer_name} · ${v.fulfilment} · ${v.channel} · ${v.pickup_code} (was ${v.previous_pickup_code})`);
+  check(v.customer_name === name && v.pickup_code === code && v.previous_pickup_code === "ZEE-4821" && v.fulfilment === "pickup",
+    "tablet handover: buyer's name, new code (old one as previous), pickup, channel ctrlz");
+  check(said(v, `New pickup code ${code}`) && said(v, name), "tablet timeline: resold/given free + new pickup code");
+  if (v.status === "preparing") {
+    // Short runs: the food is not ready yet. (Long runs: it became ready on its own at ready_at.)
+    check((await call("POST", `/api/restaurant/orders/${ORDER}/picked-up`)).status === 409, "Picked up before ready → 409");
+  }
+  check((await call("POST", `/api/restaurant/orders/${ORDER}/ready`)).status === 200, "tablet: Mark ready");
+  await kitchen.waitFor("ready", view((o) => o.status === "ready" && said(o, "Ready for pickup")));
+  check((await call("POST", `/api/restaurant/orders/${ORDER}/picked-up`)).status === 200, "tablet: Picked up");
+  const done = (await kitchen.waitFor("picked up", view((o) => o.status === "picked_up"))).order;
+  check(said(done, `Picked up by ${name}`), `tablet timeline: "Picked up by ${name}"`);
+  log(`  timeline: ${done.timeline.map((e) => e.text).join(" → ")}`);
+}
+
 async function stopScenario(id, seller, alice) {
   const stop = await call("POST", `/api/listings/${id}/stop`);
   check(stop.status === 200 && stop.data.status === "stopped", "Stop listing → stopped");
@@ -248,6 +289,8 @@ async function stopScenario(id, seller, alice) {
   check(closedS.outcome === "stopped", "seller and Alice get listing.closed (stopped)");
   const order = await call("GET", `/api/orders/${ORDER}`);
   check(order.data.listing_id === null && order.data.order.status !== "picked_up", "order back to normal");
+  const back = (await kitchen.waitFor("back to delivery", view((v) => v.fulfilment === "delivery" && said(v, "stopped")))).order;
+  check(back.channel === "delivery_app" && back.customer_name === "Alex" && back.pickup_code === "ZEE-4821", "tablet: back to delivery, Alex, ZEE-4821");
   check((await call("POST", `/api/orders/${ORDER}/undo`)).status === 200, "Ctrl+Z works again after stopping");
 }
 
@@ -272,7 +315,9 @@ async function closeScenario(id, speed, seller, alice, bob, a, b) {
   const zero = await alice.waitFor("tick at $0", (m) => m.type === "listing.tick" && m.listing_id === id && m.price === 0);
   check(zero.price === 0, "price is $0 in the free window");
   const take = await call("POST", `/api/listings/${id}/buy`, undefined, a.token);
-  check(take.status === 200 && take.data.kind === "free" && take.data.pass.pickup_code === "ZEE-4821", "Alice taps → straight to the pass (no lock, no payment)");
+  const freeCode = take.data?.pass?.pickup_code;
+  check(take.status === 200 && take.data.kind === "free" && NEW_CODE.test(freeCode ?? "") && freeCode !== "ZEE-4821", `Alice taps → straight to the pass with a NEW code ${freeCode} (no lock, no payment)`);
+  await checkHandover("Test Alice", freeCode);
   check((await call("POST", `/api/listings/${id}/buy`, undefined, b.token)).status === 409, "Bob taps after → 409");
   const soldS = await seller.waitFor("listing.sold", of("listing.sold", id));
   check(soldS.sold_price === 0 && !soldS.pass, "seller: listing.sold at $0, no pass");

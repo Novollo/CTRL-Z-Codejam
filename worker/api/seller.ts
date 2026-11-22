@@ -80,6 +80,8 @@ seller.post("/orders/:id/undo", async (c) => {
     )
     .run();
 
+  await market(c.env).orderEvent(order.id, "Customer pressed Ctrl+Z", "ctrlz"); // restaurant timeline (round 4)
+
   return c.json<UndoResponse>({
     listing_id: id,
     title: result.title,

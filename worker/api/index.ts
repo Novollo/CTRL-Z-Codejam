@@ -6,6 +6,7 @@ import type { Env } from "../env";
 import { toRestaurant } from "../market/db";
 import { admin } from "./admin";
 import { buyer } from "./buyer";
+import { restaurant } from "./restaurant";
 import { seller } from "./seller";
 import { webhooks } from "./webhooks";
 
@@ -35,6 +36,7 @@ api.get("/restaurants", async (c) => {
 api.route("/", seller);
 api.route("/", buyer);
 api.route("/", webhooks);
+api.route("/", restaurant);
 api.route("/admin", admin);
 
 api.onError((err, c) => {
