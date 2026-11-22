@@ -57,8 +57,8 @@
 
   // src/settings.ts
   var SERVERS = [
-    { url: "http://localhost:8787", label: "This laptop (npm run dev)" },
-    { url: "https://ctrlz-eats.stalerole.workers.dev", label: "Live site" }
+    { url: "https://ctrlz-eats.stalerole.workers.dev", name: "Live site", label: "Live site (judges' phones)" },
+    { url: "http://localhost:8787", name: "This laptop", label: "This laptop (npm run dev)" }
   ];
   var DEFAULT_SETTINGS = { apiBase: SERVERS[0].url, demo: false };
   async function getSettings() {

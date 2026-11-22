@@ -25,7 +25,7 @@ async function main() {
   let latest: ScrapedOrder | null = null;
 
   const panel = new Panel();
-  const button = new CtrlzButton(() => panel.open(reader.read(document) ?? latest, settings.demo));
+  const button = new CtrlzButton(() => panel.open(reader.read(document) ?? latest, settings));
 
   /** R1: the button only exists while the order is "Preparing". Demo mode shows it on any order page. */
   const check = () => {

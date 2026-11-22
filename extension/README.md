@@ -18,10 +18,10 @@ The folder already contains the built files (`extension/build`). After changing 
 
 Click the Ctrl+Z Eats icon in the toolbar. Under **Server**, pick:
 
-- **This laptop**: `http://localhost:8787`. Start it first with `npm run dev`.
-- **Live site**: `https://ctrlz-eats.stalerole.workers.dev`. It needs the import endpoint (`POST /api/orders/import`) to be deployed.
+- **Live site** (the default): `https://ctrlz-eats.stalerole.workers.dev`. Use this on stage: the judges' phones are on the live site.
+- **This laptop**: `http://localhost:8787`. Start it first with `npm run dev`. Phones on the live site are not pinged.
 
-The popup tells you if it can reach the server.
+The popup tells you if it can reach the server. The panel shows the chosen server in small grey text at the bottom ("Server: Live site").
 
 ## Demo mode
 
@@ -37,7 +37,8 @@ If the page can't be read (DoorDash changed its layout), the panel still opens w
 1. Open a past order on doordash.com, with demo mode on.
 2. Press and hold **Ctrl+Z this order** for about a second.
 3. Check the order, then press **Continue**. The agent writes the listing and the price plan.
-4. Press and hold **List it**. Phones on `/join` (and Telegram) get pinged, and the price falls live in the panel.
+4. Change the plan if you like, as in the seller app: **Lowest price** with − / +, and **If nobody buys it**.
+5. Press and hold **List it**. Phones on `/join` (and Telegram) get pinged, and the price falls live in the panel.
 
 ## Add another site (Uber Eats, SkipTheDishes, ...)
 
