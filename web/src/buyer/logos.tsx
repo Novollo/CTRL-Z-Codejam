@@ -40,11 +40,12 @@ export function LogoTile({ src, alt, size = 40, className = "" }: { src: string 
 }
 
 /** "Campus favourites": all logos, gently auto-scrolling. Pauses while touched. Hidden until the list loads. */
-export function LogoMarquee({ className = "" }: { className?: string }) {
+export function LogoMarquee({ className = "", copies = 2 }: { className?: string; copies?: 2 | 4 | 6 }) {
   const list = useRestaurants();
   const [paused, setPaused] = useState(false);
   if (list.length === 0) return null;
-  const loop = [...list, ...list]; // two copies: the strip moves by half its width, then starts again seamlessly
+  // An even number of copies: the strip moves by half its width, then starts again seamlessly. Wide screens need more.
+  const loop = Array.from({ length: copies }, () => list).flat();
   return (
     <div className={`ui-fade-in ${className}`}>
       <p className="text-small font-semibold text-stone">Campus favourites</p>
@@ -55,7 +56,7 @@ export function LogoMarquee({ className = "" }: { className?: string }) {
         onPointerLeave={() => setPaused(false)}
         onPointerCancel={() => setPaused(false)}
       >
-        <div className="buyer-marquee flex w-max gap-3" style={{ animationPlayState: paused ? "paused" : "running" }}>
+        <div className="buyer-marquee flex w-max gap-3" style={{ animationPlayState: paused ? "paused" : "running", animationDuration: `${copies * 11}s` }}>
           {loop.map((r, k) => (
             <LogoTile key={k} src={r.logo_url} alt={r.name} size={56} />
           ))}
