@@ -7,6 +7,7 @@ import { AdminPage } from "./stage/admin/AdminPage";
 import { DemoPage } from "./stage/DemoPage";
 import { RestaurantApp } from "./restaurant/RestaurantApp";
 import { SoundCheck } from "./ui/SoundCheck";
+import { LandingPage } from "./landing/LandingPage";
 
 export function App() {
   const path = window.location.pathname.replace(/\/+$/, "") || "/";
@@ -21,17 +22,5 @@ export function App() {
   if (path === "/restaurant") return <RestaurantApp />;
   if (path === "/sounds") return <SoundCheck />;
 
-  return (
-    <main className="mx-auto max-w-md p-6">
-      <h1 className="text-h1 text-ink">Ctrl+Z Eats</h1>
-      <p className="mt-2 text-stone">You can't cancel once it's cooking. With us, you can Ctrl+Z it.</p>
-      <ul className="mt-6 space-y-2">
-        {["/demo", "/seller", "/join", "/restaurant", "/stage", "/admin"].map((p) => (
-          <li key={p}>
-            <a className="text-forest underline" href={p}>{p}</a>
-          </li>
-        ))}
-      </ul>
-    </main>
-  );
+  return <LandingPage />;
 }

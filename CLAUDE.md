@@ -20,7 +20,7 @@ Read these rules before you change anything. They apply to every track.
 | --- | --- |
 | 0. Contract (lead) | everything at first, then `/shared` and root config only |
 | A. Seller app | `web/src/seller` |
-| B. Buyer web + stage | `web/src/buyer`, `web/src/stage` (the `/admin` page lives in `web/src/stage/admin`) |
+| B. Buyer web + stage | `web/src/buyer`, `web/src/stage` (the `/admin` page lives in `web/src/stage/admin`), `web/src/landing` (round 6) |
 | C. Market engine | `worker/market`, `worker/api` |
 | D. Integrations | `worker/agent`, `worker/stripe`, `worker/telegram` |
 | E. Restaurant tablet (round 4) | `web/src/restaurant` |

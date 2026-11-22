@@ -132,3 +132,28 @@ Seller (left, `/seller`), buyer (middle, `/join`), restaurant (right, `/restaura
 - On sale or free take: generate `listings.pickup_code = makePickupCode()`; the `PickupPass.pickup_code` is that NEW code; the restaurant view shows the new code with the old one as `previous_pickup_code`, `customer_name` = buyer's name, `channel` "ctrlz".
 - Fulfilment: delivery orders become pickup from publish onward (courier released); back to delivery if the seller stops the listing.
 - Admin reset restores all of this.
+
+# Round 6: landing page at `/` (the stand banner)
+
+At the fair the laptop shows `/`. It must say **"food ordering"** and **"undo"** in one second, from across a room. Never name or show Uber; say "your delivery app".
+
+## Section 1: Hero (full screen on a laptop, the stand banner)
+- Left: the logo (keycaps **Ctrl** + **Z** **Eats**), Zee big (`waving`, bob), and the headline:
+  **"Undo your food order."**
+  Sub-line: **"Ordered food you can't cancel anymore? Ctrl+Z it. Someone near campus gets it fresh, for less, and you get money back."**
+- Buttons: primary **"Try it now →"** → `/demo` (big, forest, `ui-press`, pulsing ring); secondary **"Get food for less"** → `/join`.
+- Right: a big white card with the QR code `/img/qr-join.svg` (already made and verified: it opens `https://ctrlz-eats.stalerole.workers.dev/join`, the buyer setup), caption **"Scan to grab cheap food near campus"** with a small phone icon. The QR must stay large (≥ 260 px on a laptop), on white, never recoloured or cropped.
+- Background: soft `Doodles` (food), mint fade; a row of the 5 restaurant logos ("Campus favourites") along the bottom of the hero.
+
+## Section 2: Two audiences, two slogans
+Two big cards side by side (stacked on a phone):
+- **For you, if you regret an order** (Zee `thinking`): headline **"Regret your order?"** Rotating lines (crossfade every ~2.5 s): "Can't cancel, it's already cooking?" · "Plans changed? Can't pick it up anymore?" · "Ordered way too much?" · "Friend invited you to lunch?" Then **"Ctrl+Z it. Get part of your money back in minutes."** Button "See the seller side →" → `/demo`.
+- **For you, if you're hungry** (Zee `bag`): headline **"Want cheaper food?"** Rotating lines: "Fresh meals near campus, up to 70% off." · "No delivery fees. No service fees." · "Get pinged when the price drops under your max." Then **"First tap wins. Pick it up at the counter."** Button "Get food for less →" → `/join`.
+
+## Section 3: How it works + why it's good
+- 4 steps in a row with icons and Zee poses (`pointing`, `thinking`, `thumbsup`, `jumping`): **1 Tap Ctrl+Z** on an order that's already cooking → **2 Zee, our AI agent, prices it** and writes the listing → **3 The price drops live**; students nearby get pinged → **4 First tap wins**, pays, and picks it up at the counter with a new code.
+- The three lines every judge should hear (booklet 2), as three small cards with icons: "You can't cancel once it's cooking. With us, you can Ctrl+Z it." · "The buyer collects at the counter, so the food never passes between strangers." · "The listing timer follows Health Canada's food safety guidance."
+- "Good for everyone" row: Seller (money back), Buyer (fresh meal for less), Restaurant (no wasted order), Planet (no food in the trash), each with an icon.
+- Footer: the QR again (smaller) + "Try it now →" + "Built at McGill · Ctrl+Z Eats".
+
+Motion: sections flow in on scroll (`ui-flow-in`, IntersectionObserver), buttons `ui-press`, no sounds on this page except `tap` on buttons. No emojis. Our tokens only. Laptop first (it's the stand screen), but fully responsive on a phone.
