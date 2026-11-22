@@ -303,6 +303,9 @@ async function checkHandover(name, code) {
   const done = (await kitchen.waitFor("picked up", view((o) => o.status === "picked_up"))).order;
   check(said(done, `Picked up by ${name}`), `tablet timeline: "Picked up by ${name}"`);
   log(`  timeline: ${done.timeline.map((e) => e.text).join(" → ")}`);
+  // Round 8: the restaurant only ever sees the original delivery-app total, never a Ctrl+Z price.
+  check(done.total === orderTotal && kitchen.msgs.every((m) => m.type !== "restaurant.order" || m.order.total === orderTotal), `tablet total stays $${done.total} (the original order total)`);
+  check(done.timeline.every((e) => !e.text.includes("$")), "tablet timeline has no prices");
 }
 
 async function stopScenario(id, seller, alice) {

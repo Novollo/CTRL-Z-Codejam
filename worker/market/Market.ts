@@ -183,7 +183,7 @@ export class Market extends DurableObject<Env> {
 
     if (origin) await this.ctx.storage.put("origin", origin); // for Telegram "Buy now" links
     await this.startClock(now); // first tick right away
-    await this.event(c.order.id, `Listed on Ctrl+Z Eats from ${formatPrice(priceAt({ ...c.listing, floor_price: floorPrice, opens_at: now, closes_at: closesAt }, now, this.speed))}`, "ctrlz", false);
+    await this.event(c.order.id, "Listed on Ctrl+Z Eats", "ctrlz", false); // the restaurant never sees a Ctrl+Z price (round 8)
     if (c.order.type === "delivery") await this.event(c.order.id, "Courier released: now pickup", "ctrlz", false); // R3
     await this.pushOrder(c.order.id);
 
@@ -302,7 +302,7 @@ export class Market extends DurableObject<Env> {
     const locked: LiveMessage = { type: "listing.locked", listing_id: listingId, lock_until: lockUntil };
     await this.sendToWatchers(c, locked, locked);
     const payer = await getBuyer(this.db, buyerId);
-    await this.event(c.order.id, `${payer?.name ?? "A buyer"} is paying on Ctrl+Z Eats (${formatPrice(price)})`, "info");
+    await this.event(c.order.id, `${payer?.name ?? "A buyer"} is paying on Ctrl+Z Eats`, "info");
     return { status: 200, body: { kind: "locked", checkout_url: checkoutUrl, lock_until: lockUntil, price } };
   }
 
@@ -695,7 +695,7 @@ export class Market extends DurableObject<Env> {
     );
 
     const name = pass?.name_on_order ?? "a buyer";
-    const sale = price > 0 ? `Resold on Ctrl+Z Eats to ${name} for ${formatPrice(price)}` : `Given free on Ctrl+Z Eats to ${name}`;
+    const sale = price > 0 ? `Resold on Ctrl+Z Eats to ${name}` : `Given free on Ctrl+Z Eats to ${name}`;
     await this.event(c.order.id, sale, "handover", false);
     await this.event(c.order.id, `New pickup code ${code}`, "handover");
     return pass;
