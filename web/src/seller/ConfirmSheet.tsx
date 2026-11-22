@@ -4,7 +4,7 @@ import { TAG_LABELS, type Fallback } from "@shared/catalog";
 import { formatPrice } from "@shared/constants";
 import type { UndoResponse } from "@shared/api";
 import type { OrderItem } from "@shared/types";
-import { Mascot, haptic, sound } from "../ui";
+import { Icon, Mascot, haptic, sound } from "../ui";
 import { FallbackPicker, FloorStepper } from "./controls";
 import { AlertIcon, ArrowRightIcon } from "./icons";
 
@@ -76,8 +76,8 @@ export function ConfirmSheet({
             </div>
             <div className="mt-3 flex items-center gap-2 rounded-card bg-mint py-1 pr-3 pl-1 text-small font-semibold text-forest">
               <Mascot pose="proud" motion="breathe" size={52} className="shrink-0" />
-              <p>
-                <span aria-hidden>🔥 </span>
+              <p className="flex items-start gap-1.5">
+                <Icon name="flame" size={16} className="mt-px text-forest" />
                 {demandLine(sheet)}
               </p>
             </div>
@@ -89,17 +89,17 @@ export function ConfirmSheet({
             <FallbackPicker value={fallback} onChange={setFallback} />
           </section>
 
-          {/* 4. Delivery orders only */}
-          {sheet.order_type === "delivery" && (
-            <section className="flex gap-3 rounded-card bg-amber/15 p-4 text-body text-ink">
-              <AlertIcon size={20} className="mt-0.5 shrink-0 text-amber" />
-              Your courier is released. If nobody buys it, you pick it up at the restaurant.
-            </section>
-          )}
         </div>
 
         {/* 5. Button + link */}
         <div className="border-t border-line px-5 pt-3 pb-5">
+          {/* 4. Delivery orders only: kept next to the button so it is always seen */}
+          {sheet.order_type === "delivery" && (
+            <p className="ui-flow-in ui-delay-4 mb-3 flex gap-2.5 rounded-card bg-amber/15 px-3 py-2.5 text-small leading-snug text-ink">
+              <AlertIcon size={18} className="mt-px shrink-0 text-amber" />
+              Your courier is released. If nobody buys it, you pick it up at the restaurant.
+            </p>
+          )}
           <button
             disabled={busy}
             onClick={() => {

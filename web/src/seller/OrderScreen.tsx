@@ -4,7 +4,7 @@ import { formatPrice } from "@shared/constants";
 import type { OrderResponse } from "@shared/api";
 import type { OrderStatus } from "@shared/types";
 import { CheckIcon, StoreIcon, UndoIcon } from "./icons";
-import { Doodles, Mascot } from "../ui";
+import { Doodles, Icon, Mascot, sound } from "../ui";
 
 const STEPS: { status: OrderStatus; label: string }[] = [
   { status: "received", label: "Order received" },
@@ -12,7 +12,7 @@ const STEPS: { status: OrderStatus; label: string }[] = [
   { status: "ready", label: "Ready for pickup" },
 ];
 
-export function OrderScreen({ data, status, onUndo }: { data: OrderResponse; status: OrderStatus; onUndo: () => void }) {
+export function OrderScreen({ data, status, onUndo, onBack }: { data: OrderResponse; status: OrderStatus; onUndo: () => void; onBack: () => void }) {
   const { order, restaurant } = data;
   const orderNumber = `#${order.id.replace(/^\D+/, "")}`;
   const { service_fee, delivery_fee, tax } = order.fees;
@@ -23,9 +23,19 @@ export function OrderScreen({ data, status, onUndo }: { data: OrderResponse; sta
       <div className="flex-1 overflow-y-auto">
         <div className="relative">
           <LogoHeader src={restaurant.logo_url} name={restaurant.name} />
-          <span className="absolute top-3 right-3 rounded-full bg-white/90 px-2.5 py-1 text-small font-semibold text-ink shadow-sm">
-            Demo app
-          </span>
+          <div className="absolute top-3 left-3 flex items-center gap-2">
+            <button
+              aria-label="Back to home"
+              onClick={() => {
+                sound.tap();
+                onBack();
+              }}
+              className="ui-press flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-ink shadow-sm ring-1 ring-line"
+            >
+              <Icon name="chevronLeft" size={22} />
+            </button>
+            <span className="rounded-full bg-white/90 px-2.5 py-1 text-small font-semibold text-ink shadow-sm">Demo app</span>
+          </div>
         </div>
 
         <div className="px-5 pt-4">
@@ -36,7 +46,16 @@ export function OrderScreen({ data, status, onUndo }: { data: OrderResponse; sta
 
           <ProgressBar stepIndex={stepIndex} />
 
-          <div className="mt-4 border-t border-line pt-2">
+          {order.type === "delivery" && (
+            <p className="ui-flow-in mt-3 flex items-center gap-2.5 rounded-card bg-[#F6F6F6] px-3 py-2 text-small text-ink">
+              <Icon name="courier" size={20} className="text-forest" />
+              <span>
+                <span className="font-semibold">Courier assigned</span> · delivering to <span className="font-semibold">{order.customer_name}</span>, McGill campus
+              </span>
+            </p>
+          )}
+
+          <div className="mt-3 border-t border-line pt-1">
             {order.items.map((item, i) => (
               <div key={item.name} className={`ui-flow-in ui-delay-${i + 1} py-1.5`}>
                 <Row label={item.name} value={formatPrice(item.price)} strong />
@@ -54,7 +73,7 @@ export function OrderScreen({ data, status, onUndo }: { data: OrderResponse; sta
       </div>
 
       <div className="space-y-2.5 border-t border-line px-5 pt-3 pb-5">
-        <button disabled className="h-bottom w-full rounded-card bg-line text-body font-semibold text-stone">
+        <button disabled className="h-12 w-full rounded-card bg-line text-body font-semibold text-stone">
           Cancel order
         </button>
         <p className="text-center text-small text-stone">Orders can't be cancelled once the restaurant starts preparing.</p>
@@ -79,9 +98,9 @@ export function OrderScreen({ data, status, onUndo }: { data: OrderResponse; sta
 function LogoHeader({ src, name }: { src: string; name: string }) {
   const [missing, setMissing] = useState(!src);
   return (
-    <div className="relative flex h-32 w-full items-center justify-center overflow-hidden bg-mint">
+    <div className="relative flex h-28 w-full items-center justify-center overflow-hidden bg-mint pt-3">
       <Doodles variant="food" tone="forest" opacity={0.07} size={200} />
-      <div className="ui-pop-in relative flex h-24 w-44 items-center justify-center rounded-card bg-white p-3 shadow-sm">
+      <div className="ui-pop-in relative flex h-[72px] w-40 items-center justify-center rounded-card bg-white p-3 shadow-sm">
         {missing ? (
           <StoreIcon size={44} className="text-forest" />
         ) : (

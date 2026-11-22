@@ -2,6 +2,7 @@
 // With ?mock=local there is no server: calls answer with the shared mock data.
 import { API } from "@shared/api";
 import type {
+  RestaurantsResponse,
   ListingPatchRequest,
   ListingPatchResponse,
   OrderResponse,
@@ -12,7 +13,7 @@ import type {
 } from "@shared/api";
 import { DEMO_ORDER_ID, LISTING_AFTER_READY_MIN } from "@shared/constants";
 import type { LiveMessage } from "@shared/messages";
-import { MOCK_LISTING_ID, MOCK_ORDER_RESPONSE, MOCK_UNDO } from "@shared/mocks/data";
+import { MOCK_LISTING_ID, MOCK_ORDER_RESPONSE, MOCK_RESTAURANT, MOCK_UNDO } from "@shared/mocks/data";
 import { apiCall } from "../lib/api";
 import { connectLive } from "../lib/live";
 
@@ -21,6 +22,10 @@ const LOCAL = params.get("mock") === "local";
 
 export const getOrder = (): Promise<OrderResponse> =>
   LOCAL ? Promise.resolve(MOCK_ORDER_RESPONSE) : apiCall<OrderResponse>("GET", API.order(DEMO_ORDER_ID));
+
+/** Home screen restaurant cards (round 4). */
+export const getRestaurants = (): Promise<RestaurantsResponse> =>
+  LOCAL ? Promise.resolve({ restaurants: [MOCK_RESTAURANT] }) : apiCall<RestaurantsResponse>("GET", API.restaurants());
 
 export const undoOrder = (): Promise<UndoResponse> =>
   LOCAL ? Promise.resolve(MOCK_UNDO) : apiCall<UndoResponse>("POST", API.undo(DEMO_ORDER_ID));

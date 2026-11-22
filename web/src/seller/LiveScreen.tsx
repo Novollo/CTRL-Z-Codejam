@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Fallback } from "@shared/catalog";
 import { formatClock, formatPrice } from "@shared/constants";
-import { sound } from "../ui";
+import { Icon, sound, type IconName } from "../ui";
 import { FallbackPicker, FloorStepper, type FloorRange } from "./controls";
 import { CountUp } from "./CountUp";
 import { ClockIcon, TagIcon } from "./icons";
@@ -40,6 +40,7 @@ export function LiveScreen({
   range,
   restaurant,
   food,
+  delivery,
   onFloor,
   onFallback,
   onStop,
@@ -48,6 +49,7 @@ export function LiveScreen({
   range: FloorRange;
   restaurant: string;
   food: string;
+  delivery: boolean;
   onFloor: (v: number) => void;
   onFallback: (f: Fallback) => void;
   onStop: () => void;
@@ -74,9 +76,9 @@ export function LiveScreen({
 
         {live.stats ? (
           <div className="ui-flow-in ui-delay-1 grid w-full grid-cols-3 gap-2">
-            <StatPill emoji="👀" value={live.stats.seen} before="Seen by " after="" />
-            <StatPill emoji="🔥" value={live.stats.interested} before="" after={live.stats.interested === 1 ? " wants it" : " want it"} />
-            <StatPill emoji="⚡" value={live.stats.watching} before="" after=" watching now" />
+            <StatPill icon="eye" value={live.stats.seen} before="Seen by " after="" />
+            <StatPill icon="users" value={live.stats.interested} before="" after={live.stats.interested === 1 ? " wants it" : " want it"} />
+            <StatPill icon="bolt" value={live.stats.watching} before="" after=" watching now" />
           </div>
         ) : (
           // Until the first listing.stats arrives: shimmering pills (and the reach line once people are pinged).
@@ -91,7 +93,7 @@ export function LiveScreen({
         )}
 
         <div className="ui-flow-in ui-delay-2 w-full">
-          <ZeeFeed live={live} restaurant={restaurant} food={food} />
+          <ZeeFeed live={live} restaurant={restaurant} food={food} delivery={delivery} />
         </div>
       </div>
 
@@ -151,7 +153,7 @@ export function LiveScreen({
 }
 
 /** One of the three pill cards. Counts up when the number changes, with a little "+N" bubble. */
-function StatPill({ emoji, value, before, after }: { emoji: string; value: number; before: string; after: string }) {
+function StatPill({ icon, value, before, after }: { icon: IconName; value: number; before: string; after: string }) {
   const prev = useRef(value);
   const [bump, setBump] = useState<{ id: number; n: number } | null>(null);
   useEffect(() => {
@@ -162,9 +164,7 @@ function StatPill({ emoji, value, before, after }: { emoji: string; value: numbe
 
   return (
     <div className="ui-pop-in relative flex flex-col items-center rounded-card border border-line bg-white px-1 py-2 text-center shadow-sm">
-      <span className="text-[18px] leading-none" aria-hidden>
-        {emoji}
-      </span>
+      <Icon name={icon} size={18} className="text-forest" />
       <span className="mt-1 text-[12px] leading-tight text-stone">
         {before}
         <CountUp value={value} className="font-mono text-body font-bold text-ink" />
