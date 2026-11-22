@@ -1,3 +1,4 @@
+import { BrandLogo } from "../ui";
 // The restaurant tablet (round 4, docs/design-round-2.md "Restaurant tablet (track E)").
 // /restaurant?r=r_fiveguys      real API + live socket (demo data until the API answers)
 // /restaurant?r=r_fiveguys&sim=1  dev-only story simulator for the stage order
@@ -31,15 +32,7 @@ function bannerFor(orders: RestaurantOrderView[]): { order: RestaurantOrderView;
 }
 
 function Logo() {
-  const cap = "rounded-md border-2 border-forest px-1.5 py-0.5 font-mono text-[11px] font-bold leading-none text-forest";
-  return (
-    <span className="inline-flex items-center gap-1">
-      <span className={cap}>Ctrl</span>
-      <span className="text-small font-bold text-forest">+</span>
-      <span className={cap}>Z</span>
-      <span className="ml-0.5 text-small font-bold text-ink">Eats</span>
-    </span>
-  );
+  return <BrandLogo height={22} />;
 }
 
 function ModePill({ mode }: { mode: Mode }) {

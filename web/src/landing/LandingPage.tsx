@@ -152,8 +152,8 @@ export function LandingPage() {
         </div>
 
         <div className="mx-auto flex w-full max-w-[1240px] flex-1 flex-col px-5 pt-6 sm:px-10 lg:pt-8">
-          <div className="ui-flow-in inline-flex self-start rounded-xl bg-white/90 px-3 py-2 shadow-sm">
-            <Logo />
+          <div className="ui-flow-in inline-flex self-start rounded-2xl bg-white/90 px-3 py-2 shadow-sm">
+            <Logo height={52} />
           </div>
 
           <div className="grid flex-1 items-center gap-10 py-8 lg:grid-cols-[1.35fr_1fr] lg:gap-14 lg:py-4">
@@ -284,7 +284,7 @@ export function LandingPage() {
       {/* Footer: the QR again (smaller). */}
       <footer className="mx-auto flex max-w-[1240px] flex-col items-center gap-8 px-5 py-14 sm:px-10 md:flex-row md:justify-between">
         <div className="flex flex-col items-center gap-5 md:items-start">
-          <Logo />
+          <Logo height={44} />
           <LinkButton href="/demo" primary big>
             Try it now
             <Icon name="arrowRight" size={24} />

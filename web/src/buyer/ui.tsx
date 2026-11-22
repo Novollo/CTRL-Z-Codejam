@@ -1,7 +1,7 @@
 // Small UI pieces for the buyer pages (booklet 11, design round 2). Inline line icons, 2 px stroke.
 // Zee, sound, haptics and confetti come from the shared kit in web/src/ui.
 import { useEffect, useState, type ReactNode } from "react";
-import { MuteButton, haptic, sound } from "../ui";
+import { MuteButton, haptic, sound, BrandLogo } from "../ui";
 import "./buyer.css";
 
 /** Current time, refreshed every `ms` while `on` is true. For real-time countdowns (lock, hold). */
@@ -75,17 +75,9 @@ export function Icon({ name, className = "h-5 w-5" }: { name: IconName; classNam
   );
 }
 
-/** Logo: "Ctrl" and "Z" keycaps in forest outline, then "Eats" (booklet 11.3). */
-export function Logo() {
-  const cap = "rounded-md border-2 border-forest px-1.5 py-0.5 font-mono text-small font-bold text-forest";
-  return (
-    <div className="flex items-center gap-1">
-      <span className={cap}>Ctrl</span>
-      <span className="font-bold text-forest">+</span>
-      <span className={cap}>Z</span>
-      <span className="ml-1 text-h3 font-bold text-ink">Eats</span>
-    </div>
-  );
+/** Logo (round 8): the team's brand logo from the kit. `height` defaults to 30 px. */
+export function Logo({ height = 30 }: { height?: number }) {
+  return <BrandLogo height={height} />;
 }
 
 /** The kit's global mute button, fixed in the top-right corner. */

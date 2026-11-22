@@ -6,3 +6,4 @@ export { sound, haptic } from "./sound";
 export { MuteButton } from "./MuteButton";
 export { Doodles } from "./Doodles";
 export { Icon, type IconName } from "./Icon";
+export { BrandLogo } from "./BrandLogo";
