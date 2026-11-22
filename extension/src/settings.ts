@@ -1,10 +1,13 @@
 // Popup settings, saved in chrome.storage.local: which Ctrl+Z Eats server to use, and demo mode.
 
-/** The two servers the extension may talk to (each one is a host permission in manifest.json). */
+/** The two servers the extension may talk to (each one is a host permission in manifest.json). The first is the default. */
 export const SERVERS = [
-  { url: "http://localhost:8787", label: "This laptop (npm run dev)" },
-  { url: "https://ctrlz-eats.stalerole.workers.dev", label: "Live site" },
+  { url: "https://ctrlz-eats.stalerole.workers.dev", name: "Live site", label: "Live site (judges' phones)" },
+  { url: "http://localhost:8787", name: "This laptop", label: "This laptop (npm run dev)" },
 ] as const;
+
+/** "Live site" or "This laptop", shown in the panel so it's obvious on stage. */
+export const serverName = (url: string): string => SERVERS.find((s) => s.url === url)?.name ?? url;
 
 export interface Settings {
   apiBase: string;

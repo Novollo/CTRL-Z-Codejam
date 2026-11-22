@@ -138,9 +138,10 @@
 
   // src/settings.ts
   var SERVERS = [
-    { url: "http://localhost:8787", label: "This laptop (npm run dev)" },
-    { url: "https://ctrlz-eats.stalerole.workers.dev", label: "Live site" }
+    { url: "https://ctrlz-eats.stalerole.workers.dev", name: "Live site", label: "Live site (judges' phones)" },
+    { url: "http://localhost:8787", name: "This laptop", label: "This laptop (npm run dev)" }
   ];
+  var serverName = (url) => SERVERS.find((s) => s.url === url)?.name ?? url;
   var DEFAULT_SETTINGS = { apiBase: SERVERS[0].url, demo: false };
   async function getSettings() {
     const raw = await chrome.storage.local.get(["apiBase", "demo"]);
@@ -295,6 +296,24 @@ label.field { display: block; margin-top: 14px; font-size: 12px; font-weight: 70
 .plan { margin-top: 16px; display: grid; gap: 8px; font-size: 16px; }
 .plan .mono { font-size: 17px; }
 .grey { margin-top: 12px; color: ${COLORS.stone}; font-size: 12px; }
+.floor { display: flex; align-items: center; justify-content: space-between; }
+.stepper { display: inline-flex; align-items: center; gap: 10px; }
+.step {
+  width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid ${COLORS.line}; font-size: 20px; line-height: 1;
+  display: grid; place-items: center; color: ${COLORS.ink};
+}
+.step:disabled { color: ${COLORS.line}; cursor: default; }
+.stepval { width: 72px; text-align: center; }
+.h3 { margin-top: 18px; font-size: 16px; font-weight: 800; }
+.choices { display: grid; gap: 8px; margin-top: 10px; }
+.choice {
+  display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 11px 14px; text-align: left;
+  border-radius: ${SHAPE.radius}px; border: 1.5px solid ${COLORS.line}; font-size: 14px;
+}
+.choice.on { border-color: ${COLORS.forest}; background: ${COLORS.mint}; color: ${COLORS.forest}; font-weight: 700; }
+.choice .tick { width: 18px; height: 18px; border-radius: 50%; border: 2px solid ${COLORS.line}; flex: none; }
+.choice.on .tick { border-color: ${COLORS.forest}; background: ${COLORS.forest}; box-shadow: inset 0 0 0 3px ${COLORS.white}; }
+.server { padding: 0 16px 10px; color: ${COLORS.stone}; font-size: 11px; }
 
 /* live */
 .live { display: inline-flex; align-items: center; gap: 6px; color: ${COLORS.forest}; font-weight: 700; font-size: 13px; }
@@ -432,8 +451,14 @@ label.field { display: block; margin-top: 14px; font-size: 12px; font-weight: 70
     fries: "Fries",
     drinks: "Drinks"
   };
+  var FALLBACKS = [
+    { key: "pickup_self", label: "I'll pick it up" },
+    { key: "free", label: "Give it free to someone nearby" },
+    { key: "donate", label: "Donate it" }
+  ];
 
   // ../shared/constants.ts
+  var roundPrice = (dollars) => Math.round(dollars * 10) / 10;
   var formatPrice = (dollars) => `$${dollars.toFixed(2)}`;
   var formatClock = (seconds) => {
     const s = Math.max(0, Math.floor(seconds));
@@ -594,6 +619,7 @@ label.field { display: block; margin-top: 14px; font-size: 12px; font-weight: 70
     body;
     foot;
     demo = false;
+    apiBase = "";
     run = 0;
     // bumps on every open/close, so late answers from an old run are ignored
     constructor() {
@@ -604,9 +630,10 @@ label.field { display: block; margin-top: 14px; font-size: 12px; font-weight: 70
     get isOpen() {
       return this.host.isConnected;
     }
-    open(scraped, demo) {
+    open(scraped, settings) {
       this.close();
-      this.demo = demo;
+      this.demo = settings.demo;
+      this.apiBase = settings.apiBase;
       const draft = {
         restaurant: scraped?.restaurant_name ?? "",
         items: scraped?.items.length ? scraped.items.map((it) => ({ ...it })) : [{ name: "", qty: 1, price: 0 }]
@@ -633,7 +660,8 @@ label.field { display: block; margin-top: 14px; font-size: 12px; font-weight: 70
           { class: "panel", role: "dialog", "aria-label": "Ctrl+Z Eats" },
           h("div", { class: "head" }, img, h("span", { class: "name" }, keycaps(), h("span", {}, "Eats")), this.demo && h("span", { class: "demo" }, "Demo mode"), closeBtn),
           this.body,
-          this.foot
+          this.foot,
+          h("p", { class: "server" }, `Server: ${serverName(this.apiBase)}`)
         )
       );
     }
@@ -734,7 +762,39 @@ label.field { display: block; margin-top: 14px; font-size: 12px; font-weight: 70
       }
     }
     // ---- 3. The agent's plan (S3 wording) ---------------------------------------------
-    showPlan(orderId, restaurant, plan, error = "") {
+    showPlan(orderId, restaurant, plan, error = "", choice = { floor: plan.floor_price, fallback: plan.fallback }) {
+      const range = { min: plan.floor_min, max: plan.floor_max, step: plan.floor_step };
+      const floorText = h("span", { class: "mono stepval" }, formatPrice(choice.floor));
+      const lower = h("button", { class: "step", type: "button", "aria-label": "Lower" }, "−");
+      const higher = h("button", { class: "step", type: "button", "aria-label": "Higher" }, "+");
+      const drawFloor = () => {
+        floorText.textContent = formatPrice(choice.floor);
+        lower.disabled = choice.floor <= range.min;
+        higher.disabled = choice.floor >= range.max;
+      };
+      const stepFloor = (dir) => {
+        choice.floor = Math.min(range.max, Math.max(range.min, roundPrice(choice.floor + dir * range.step)));
+        drawFloor();
+      };
+      lower.addEventListener("click", () => stepFloor(-1));
+      higher.addEventListener("click", () => stepFloor(1));
+      drawFloor();
+      const fallbacks = FALLBACKS.map((f) => {
+        const btn = h("button", { class: "choice", type: "button", role: "radio" }, h("span", {}, f.label), h("span", { class: "tick" }));
+        btn.addEventListener("click", () => {
+          choice.fallback = f.key;
+          drawFallback();
+        });
+        return { key: f.key, btn };
+      });
+      const drawFallback = () => {
+        for (const f of fallbacks) {
+          const on = f.key === choice.fallback;
+          f.btn.classList.toggle("on", on);
+          f.btn.setAttribute("aria-checked", String(on));
+        }
+      };
+      drawFallback();
       const chips = [...plan.tags.map((t) => TAG_LABELS[t]), ...plan.may_contain.length ? [`May contain: ${plan.may_contain.join(", ")}`] : []];
       fill(
         this.body,
@@ -749,8 +809,10 @@ label.field { display: block; margin-top: 14px; font-size: 12px; font-weight: 70
           "div",
           { class: "plan" },
           h("p", {}, "Starts at ", h("span", { class: "mono" }, formatPrice(plan.start_price))),
-          h("p", {}, "Lowest price: ", h("span", { class: "mono" }, formatPrice(plan.floor_price)))
+          h("div", { class: "floor" }, h("span", {}, "Lowest price:"), h("span", { class: "stepper" }, lower, floorText, higher))
         ),
+        h("p", { class: "h3" }, "If nobody buys it:"),
+        h("div", { class: "choices", role: "radiogroup", "aria-label": "If nobody buys it" }, ...fallbacks.map((f) => f.btn)),
         h("p", { class: "grey" }, "Demo: the restaurant handover runs in the Ctrl+Z Eats app."),
         error && h("p", { class: "error" }, error)
       );
@@ -761,10 +823,10 @@ label.field { display: block; margin-top: 14px; font-size: 12px; font-weight: 70
         const run = this.run;
         list.disabled = true;
         try {
-          const live = await server.publish(plan.listing_id, { floor_price: plan.floor_price, fallback: plan.fallback });
+          const live = await server.publish(plan.listing_id, { floor_price: choice.floor, fallback: choice.fallback });
           if (run === this.run) this.showLive(orderId, restaurant, plan.listing_id, live.price, live.seconds_left);
         } catch (e) {
-          if (run === this.run) this.showPlan(orderId, restaurant, plan, problem(e));
+          if (run === this.run) this.showPlan(orderId, restaurant, plan, problem(e), choice);
         }
       });
       fill(this.foot, list, h("p", { class: "hint center" }, "Press and hold"), never);
@@ -846,7 +908,7 @@ label.field { display: block; margin-top: 14px; font-size: 12px; font-weight: 70
     let settings = await getSettings();
     let latest = null;
     const panel = new Panel();
-    const button = new CtrlzButton(() => panel.open(reader.read(document) ?? latest, settings.demo));
+    const button = new CtrlzButton(() => panel.open(reader.read(document) ?? latest, settings));
     const check = () => {
       const onOrder = reader.isOrderPage(document, new URL(location.href));
       latest = onOrder ? reader.read(document) : null;

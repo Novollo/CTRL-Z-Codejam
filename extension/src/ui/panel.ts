@@ -1,12 +1,15 @@
 // The Ctrl+Z panel: 1 check the order (editable) → 2 agent at work → 3 the agent's plan → 4 live price.
 // Wording follows the seller app (booklet S2–S5). The panel opens even if the reader found nothing.
 import type { UndoResponse } from "@shared/api";
-import { TAG_LABELS } from "@shared/catalog";
-import { formatClock, formatPrice } from "@shared/constants";
+import { FALLBACKS, TAG_LABELS } from "@shared/catalog";
+import type { Fallback } from "@shared/catalog";
+import { formatClock, formatPrice, roundPrice } from "@shared/constants";
 import type { LiveMessage } from "@shared/messages";
 import mark from "../../img/mark.webp";
 import type { ScrapedItem, ScrapedOrder } from "../../sites/types";
 import { ServerError, server, startLive, stopLive } from "../server";
+import type { Settings } from "../settings";
+import { serverName } from "../settings";
 import { fill, h, keycaps, shadowHost } from "./dom";
 import { makeHoldButton } from "./hold";
 
@@ -33,6 +36,7 @@ export class Panel {
   private body!: HTMLElement;
   private foot!: HTMLElement;
   private demo = false;
+  private apiBase = "";
   private run = 0; // bumps on every open/close, so late answers from an old run are ignored
 
   constructor() {
@@ -45,9 +49,10 @@ export class Panel {
     return this.host.isConnected;
   }
 
-  open(scraped: ScrapedOrder | null, demo: boolean): void {
+  open(scraped: ScrapedOrder | null, settings: Settings): void {
     this.close();
-    this.demo = demo;
+    this.demo = settings.demo;
+    this.apiBase = settings.apiBase;
     const draft: Draft = {
       restaurant: scraped?.restaurant_name ?? "",
       items: scraped?.items.length ? scraped.items.map((it) => ({ ...it })) : [{ name: "", qty: 1, price: 0 }],
@@ -77,6 +82,7 @@ export class Panel {
         h("div", { class: "head" }, img, h("span", { class: "name" }, keycaps(), h("span", {}, "Eats")), this.demo && h("span", { class: "demo" }, "Demo mode"), closeBtn),
         this.body,
         this.foot,
+        h("p", { class: "server" }, `Server: ${serverName(this.apiBase)}`),
       ),
     );
   }
@@ -176,7 +182,42 @@ export class Panel {
   }
 
   // ---- 3. The agent's plan (S3 wording) ---------------------------------------------
-  private showPlan(orderId: string, restaurant: string, plan: UndoResponse, error = ""): void {
+  private showPlan(orderId: string, restaurant: string, plan: UndoResponse, error = "", choice = { floor: plan.floor_price, fallback: plan.fallback }): void {
+    // S3: "Lowest price" with − / + in floor_step steps (30–70% of the food price), and "If nobody buys it".
+    const range = { min: plan.floor_min, max: plan.floor_max, step: plan.floor_step };
+    const floorText = h("span", { class: "mono stepval" }, formatPrice(choice.floor));
+    const lower = h("button", { class: "step", type: "button", "aria-label": "Lower" }, "−");
+    const higher = h("button", { class: "step", type: "button", "aria-label": "Higher" }, "+");
+    const drawFloor = () => {
+      floorText.textContent = formatPrice(choice.floor);
+      lower.disabled = choice.floor <= range.min;
+      higher.disabled = choice.floor >= range.max;
+    };
+    const stepFloor = (dir: -1 | 1) => {
+      choice.floor = Math.min(range.max, Math.max(range.min, roundPrice(choice.floor + dir * range.step)));
+      drawFloor();
+    };
+    lower.addEventListener("click", () => stepFloor(-1));
+    higher.addEventListener("click", () => stepFloor(1));
+    drawFloor();
+
+    const fallbacks = FALLBACKS.map((f) => {
+      const btn = h("button", { class: "choice", type: "button", role: "radio" }, h("span", {}, f.label), h("span", { class: "tick" }));
+      btn.addEventListener("click", () => {
+        choice.fallback = f.key as Fallback;
+        drawFallback();
+      });
+      return { key: f.key, btn };
+    });
+    const drawFallback = () => {
+      for (const f of fallbacks) {
+        const on = f.key === choice.fallback;
+        f.btn.classList.toggle("on", on);
+        f.btn.setAttribute("aria-checked", String(on));
+      }
+    };
+    drawFallback();
+
     const chips = [...plan.tags.map((t) => TAG_LABELS[t]), ...(plan.may_contain.length ? [`May contain: ${plan.may_contain.join(", ")}`] : [])];
     fill(this.body, 
       h(
@@ -190,8 +231,10 @@ export class Panel {
         "div",
         { class: "plan" },
         h("p", {}, "Starts at ", h("span", { class: "mono" }, formatPrice(plan.start_price))),
-        h("p", {}, "Lowest price: ", h("span", { class: "mono" }, formatPrice(plan.floor_price))),
+        h("div", { class: "floor" }, h("span", {}, "Lowest price:"), h("span", { class: "stepper" }, lower, floorText, higher)),
       ),
+      h("p", { class: "h3" }, "If nobody buys it:"),
+      h("div", { class: "choices", role: "radiogroup", "aria-label": "If nobody buys it" }, ...fallbacks.map((f) => f.btn)),
       h("p", { class: "grey" }, "Demo: the restaurant handover runs in the Ctrl+Z Eats app."),
       error && h("p", { class: "error" }, error),
     );
@@ -203,10 +246,10 @@ export class Panel {
       const run = this.run;
       list.disabled = true;
       try {
-        const live = await server.publish(plan.listing_id, { floor_price: plan.floor_price, fallback: plan.fallback });
+        const live = await server.publish(plan.listing_id, { floor_price: choice.floor, fallback: choice.fallback });
         if (run === this.run) this.showLive(orderId, restaurant, plan.listing_id, live.price, live.seconds_left);
       } catch (e) {
-        if (run === this.run) this.showPlan(orderId, restaurant, plan, problem(e));
+        if (run === this.run) this.showPlan(orderId, restaurant, plan, problem(e), choice);
       }
     });
     fill(this.foot, list, h("p", { class: "hint center" }, "Press and hold"), never);

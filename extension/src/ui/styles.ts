@@ -111,6 +111,24 @@ label.field { display: block; margin-top: 14px; font-size: 12px; font-weight: 70
 .plan { margin-top: 16px; display: grid; gap: 8px; font-size: 16px; }
 .plan .mono { font-size: 17px; }
 .grey { margin-top: 12px; color: ${COLORS.stone}; font-size: 12px; }
+.floor { display: flex; align-items: center; justify-content: space-between; }
+.stepper { display: inline-flex; align-items: center; gap: 10px; }
+.step {
+  width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid ${COLORS.line}; font-size: 20px; line-height: 1;
+  display: grid; place-items: center; color: ${COLORS.ink};
+}
+.step:disabled { color: ${COLORS.line}; cursor: default; }
+.stepval { width: 72px; text-align: center; }
+.h3 { margin-top: 18px; font-size: 16px; font-weight: 800; }
+.choices { display: grid; gap: 8px; margin-top: 10px; }
+.choice {
+  display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 11px 14px; text-align: left;
+  border-radius: ${SHAPE.radius}px; border: 1.5px solid ${COLORS.line}; font-size: 14px;
+}
+.choice.on { border-color: ${COLORS.forest}; background: ${COLORS.mint}; color: ${COLORS.forest}; font-weight: 700; }
+.choice .tick { width: 18px; height: 18px; border-radius: 50%; border: 2px solid ${COLORS.line}; flex: none; }
+.choice.on .tick { border-color: ${COLORS.forest}; background: ${COLORS.forest}; box-shadow: inset 0 0 0 3px ${COLORS.white}; }
+.server { padding: 0 16px 10px; color: ${COLORS.stone}; font-size: 11px; }
 
 /* live */
 .live { display: inline-flex; align-items: center; gap: 6px; color: ${COLORS.forest}; font-weight: 700; font-size: 13px; }
