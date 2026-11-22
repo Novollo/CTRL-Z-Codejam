@@ -12,11 +12,14 @@ export type Offer =
   /** B3, or B-hold when holdUntil is set (someone else is paying). `watching` from listing.stats. */
   | { step: "card"; card: ListingCard; reason: string; holdUntil: number | null; watching: number | null }
   /** B4: this buyer won the lock. */
-  | { step: "locked"; card: ListingCard; price: number; lockUntil: number; checkoutUrl: string; timedOut: boolean }
+  | { step: "locked"; card: ListingCard; price: number; lockUntil: number; checkoutUrl: string; timedOut: boolean; paying: boolean }
   /** B-lost: someone else got it. */
   | { step: "lost"; card: ListingCard; soldPrice: number }
   /** B5: pickup pass. `free` when taken in the free window (no payment). */
   | { step: "pass"; pass: PickupPass; free: boolean };
+
+/** Name of the Stripe popup window opened from a frame. */
+export const PAY_WINDOW = "ctrlz-pay";
 
 export const openCard = (card: ListingCard, reason: string): Extract<Offer, { step: "card" }> => ({
   step: "card",
@@ -122,7 +125,7 @@ export function useOfferFlow(token: string | null) {
     try {
       const res = await apiCall<BuyResponse>("POST", API.buy(card.listing_id), undefined, token);
       if (res.kind === "locked") {
-        setOffer({ step: "locked", card, price: res.price, lockUntil: res.lock_until, checkoutUrl: res.checkout_url, timedOut: false });
+        setOffer({ step: "locked", card, price: res.price, lockUntil: res.lock_until, checkoutUrl: res.checkout_url, timedOut: false, paying: false });
       } else {
         setOffer({ step: "pass", pass: res.pass, free: true });
       }
@@ -144,8 +147,25 @@ export function useOfferFlow(token: string | null) {
     setOffer(null);
   };
 
+  /** B4 "Pay". Stripe Checkout refuses to run inside a frame (/demo, /stage): there it opens in a popup,
+   *  and this frame keeps B4 until listing.sold brings the pass over /ws. On a real phone: normal redirect. */
   const pay = () => {
-    if (offer?.step === "locked") window.location.assign(offer.checkoutUrl);
+    if (offer?.step !== "locked") return;
+    const url = offer.checkoutUrl;
+    if (window.self === window.top) {
+      window.location.assign(url);
+      return;
+    }
+    const popup = window.open(url, PAY_WINDOW, "width=480,height=760");
+    if (popup) {
+      setOffer((o) => (o?.step === "locked" ? { ...o, paying: true } : o));
+      return;
+    }
+    try {
+      window.top!.location.href = url; // popup blocked: leave the frame instead
+    } catch {
+      window.location.assign(url);
+    }
   };
 
   /** B5 after the Stripe redirect (/join?paid=<listingId>). */
