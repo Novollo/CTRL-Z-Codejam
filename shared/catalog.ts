@@ -66,13 +66,13 @@ export type CampusSpot = (typeof CAMPUS_SPOTS)[number]["key"];
 export const WALK_CHOICES_MIN = [5, 10, 15, 20] as const;
 export type WalkChoice = (typeof WALK_CHOICES_MIN)[number];
 
-/** Seller fallback when nobody buys (booklet R9, S3.3). */
-export const FALLBACKS = [
+/** Seller fallback when nobody buys (booklet R9, S3.3). "donate" stays valid for the engine and old rows, but is no longer offered (round 8: donate button removed). */
+export type Fallback = "pickup_self" | "free" | "donate";
+/** The choices shown to the seller (S3 and the Chrome extension). */
+export const FALLBACKS: readonly { key: Fallback; label: string }[] = [
   { key: "pickup_self", label: "I'll pick it up" },
   { key: "free", label: "Give it free to someone nearby" },
-  { key: "donate", label: "Donate it" },
-] as const;
-export type Fallback = (typeof FALLBACKS)[number]["key"];
+];
 export const DEFAULT_FALLBACK: Fallback = "free";
 
 export type DropSpeed = "fast" | "normal" | "slow";

@@ -463,8 +463,7 @@ label.field { display: block; margin-top: 14px; font-size: 12px; font-weight: 70
   };
   var FALLBACKS = [
     { key: "pickup_self", label: "I'll pick it up" },
-    { key: "free", label: "Give it free to someone nearby" },
-    { key: "donate", label: "Donate it" }
+    { key: "free", label: "Give it free to someone nearby" }
   ];
 
   // ../shared/constants.ts
