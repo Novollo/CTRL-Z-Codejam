@@ -100,7 +100,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
               <section key={k} className="flex h-full w-full shrink-0 flex-col" aria-hidden={!on}>
                 <div className={`relative flex flex-[1.15] items-center justify-center overflow-hidden rounded-b-[32px] ${c.bg}`}>
                   <Doodles variant={c.doodles.variant} tone={c.doodles.tone} opacity={c.doodles.opacity} />
-                  <div className="absolute top-4 left-5 rounded-lg bg-white/90 px-2 py-1">
+                  <div className="absolute top-4 left-5">
                     <Logo />
                   </div>
                   {/* Soft white shape, bigger than Zee: the bird is never clipped and never sits on red or forest. */}

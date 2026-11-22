@@ -152,7 +152,7 @@ export function LandingPage() {
         </div>
 
         <div className="mx-auto flex w-full max-w-[1240px] flex-1 flex-col px-5 pt-6 sm:px-10 lg:pt-8">
-          <div className="ui-flow-in inline-flex self-start rounded-2xl bg-white/90 px-3 py-2 shadow-sm">
+          <div className="ui-flow-in inline-flex self-start">
             <Logo height={52} />
           </div>
 
