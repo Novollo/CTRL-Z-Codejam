@@ -47,23 +47,15 @@ export function OrderScreen({ data, status, onUndo, onBack }: { data: OrderRespo
           <ProgressBar stepIndex={stepIndex} />
 
           {order.type === "delivery" && (
-            <div className="ui-flow-in mt-4 space-y-2 rounded-card bg-[#F6F6F6] px-3 py-2.5 text-small text-ink">
-              <p className="flex items-center gap-2.5">
-                <Icon name="courier" size={20} className="text-forest" />
-                <span>
-                  <span className="font-semibold">Courier assigned.</span> Waiting at {restaurant.name}.
-                </span>
-              </p>
-              <p className="flex items-center gap-2.5">
-                <Icon name="pin" size={20} className="text-forest" />
-                <span>
-                  Delivering to <span className="font-semibold">{order.customer_name}</span> · McGill campus
-                </span>
-              </p>
-            </div>
+            <p className="ui-flow-in mt-3 flex items-center gap-2.5 rounded-card bg-[#F6F6F6] px-3 py-2 text-small text-ink">
+              <Icon name="courier" size={20} className="text-forest" />
+              <span>
+                <span className="font-semibold">Courier assigned</span> · delivering to <span className="font-semibold">{order.customer_name}</span>, McGill campus
+              </span>
+            </p>
           )}
 
-          <div className="mt-4 border-t border-line pt-2">
+          <div className="mt-3 border-t border-line pt-1">
             {order.items.map((item, i) => (
               <div key={item.name} className={`ui-flow-in ui-delay-${i + 1} py-1.5`}>
                 <Row label={item.name} value={formatPrice(item.price)} strong />
@@ -81,7 +73,7 @@ export function OrderScreen({ data, status, onUndo, onBack }: { data: OrderRespo
       </div>
 
       <div className="space-y-2.5 border-t border-line px-5 pt-3 pb-5">
-        <button disabled className="h-bottom w-full rounded-card bg-line text-body font-semibold text-stone">
+        <button disabled className="h-12 w-full rounded-card bg-line text-body font-semibold text-stone">
           Cancel order
         </button>
         <p className="text-center text-small text-stone">Orders can't be cancelled once the restaurant starts preparing.</p>
@@ -106,9 +98,9 @@ export function OrderScreen({ data, status, onUndo, onBack }: { data: OrderRespo
 function LogoHeader({ src, name }: { src: string; name: string }) {
   const [missing, setMissing] = useState(!src);
   return (
-    <div className="relative flex h-32 w-full items-center justify-center overflow-hidden bg-mint">
+    <div className="relative flex h-28 w-full items-center justify-center overflow-hidden bg-mint pt-3">
       <Doodles variant="food" tone="forest" opacity={0.07} size={200} />
-      <div className="ui-pop-in relative flex h-24 w-44 items-center justify-center rounded-card bg-white p-3 shadow-sm">
+      <div className="ui-pop-in relative flex h-[72px] w-40 items-center justify-center rounded-card bg-white p-3 shadow-sm">
         {missing ? (
           <StoreIcon size={44} className="text-forest" />
         ) : (

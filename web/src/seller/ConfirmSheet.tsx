@@ -89,17 +89,17 @@ export function ConfirmSheet({
             <FallbackPicker value={fallback} onChange={setFallback} />
           </section>
 
-          {/* 4. Delivery orders only */}
-          {sheet.order_type === "delivery" && (
-            <section className="flex gap-3 rounded-card bg-amber/15 p-4 text-body text-ink">
-              <AlertIcon size={20} className="mt-0.5 shrink-0 text-amber" />
-              Your courier is released. If nobody buys it, you pick it up at the restaurant.
-            </section>
-          )}
         </div>
 
         {/* 5. Button + link */}
         <div className="border-t border-line px-5 pt-3 pb-5">
+          {/* 4. Delivery orders only: kept next to the button so it is always seen */}
+          {sheet.order_type === "delivery" && (
+            <p className="ui-flow-in ui-delay-4 mb-3 flex gap-2.5 rounded-card bg-amber/15 px-3 py-2.5 text-small leading-snug text-ink">
+              <AlertIcon size={18} className="mt-px shrink-0 text-amber" />
+              Your courier is released. If nobody buys it, you pick it up at the restaurant.
+            </p>
+          )}
           <button
             disabled={busy}
             onClick={() => {
