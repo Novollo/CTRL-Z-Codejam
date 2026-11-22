@@ -123,14 +123,14 @@ export const MOCK_RESTAURANT_QUEUE = (now: number): import("../types").Restauran
   {
     order_id: "ord_4823", short_code: "#4823", customer_name: "Maya",
     items: [{ name: "Bacon Cheeseburger", price: 13.99, description: "Two patties, bacon, cheese." }, { name: "Five Guys Fries (little)", price: 5.49, description: "Peanut oil." }],
-    food_price: 19.48, status: "received", fulfilment: "delivery", channel: "delivery_app",
+    food_price: 19.48, total: 27.88, status: "received", fulfilment: "delivery", channel: "delivery_app",
     pickup_code: "ZEE-4823", previous_pickup_code: null, previous_customer_name: null, ctrlz: null,
     timeline: [{ at: now - 60_000, text: "Order received", kind: "info" }], placed_at: now - 60_000,
   },
   {
     order_id: "ord_4817", short_code: "#4817", customer_name: "Jordan",
     items: [{ name: "Grilled Cheese", price: 7.99, description: "American cheese on a toasted bun." }],
-    food_price: 7.99, status: "ready", fulfilment: "pickup", channel: "delivery_app",
+    food_price: 7.99, total: 9.19, status: "ready", fulfilment: "pickup", channel: "delivery_app",
     pickup_code: "ZEE-4817", previous_pickup_code: null, previous_customer_name: null, ctrlz: null,
     timeline: [{ at: now - 9 * 60_000, text: "Order received", kind: "info" }, { at: now - 2 * 60_000, text: "Ready for pickup", kind: "done" }],
     placed_at: now - 9 * 60_000,

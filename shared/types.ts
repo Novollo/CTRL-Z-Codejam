@@ -172,6 +172,7 @@ export interface RestaurantOrderView {
   customer_name: string;          // original customer, or the new buyer after the handover
   items: OrderItem[];
   food_price: number;
+  total: number;                  // round 8: the original delivery-app order total (food + fees + tax). Shown on the tablet; never changes.
   status: OrderStatus;            // received / preparing / ready / picked_up
   fulfilment: Fulfilment;         // delivery until the courier is released (listing published), then pickup
   channel: OrderChannel;          // "ctrlz" once sold or given free on Ctrl+Z Eats
