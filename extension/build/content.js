@@ -14,10 +14,20 @@
   var TID_STATUS = "[data-testid='order-status']";
   var TID_STATUS_SECTION = "[data-testid='OrderStatusSection']";
   var TID_MERCHANT = "[data-testid='merchantSection']";
-  var TID_ITEMS = "[data-testid='DeliverySection']";
+  var TID_ITEMS = "[data-testid='receiptSummaryItemsList'], [data-testid='DeliverySection']";
   var root = (doc) => doc.querySelector("main, [role='main']") ?? doc.body;
   function lines(doc, el = root(doc)) {
     return (el.innerText || "").split("\n").map((l) => l.replace(/\s+/g, " ").trim()).filter(Boolean);
+  }
+  function blockLines(doc, el) {
+    if (el.getClientRects().length > 0) return lines(doc, el);
+    const out = [];
+    const walker = doc.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      const t = (n.textContent ?? "").replace(/\s+/g, " ").trim();
+      if (t) out.push(t);
+    }
+    return out;
   }
   var money = (s) => Math.round(Number(s.replace(/,/g, "")) * 100) / 100;
   var shortText = (el) => (el?.innerText ?? el?.textContent ?? "").replace(/\s+/g, " ").trim();
@@ -106,7 +116,7 @@
       try {
         const text = lines(doc);
         const itemsBlock = doc.querySelector(TID_ITEMS);
-        let items = itemsBlock ? readItems(lines(doc, itemsBlock)) : [];
+        let items = itemsBlock ? readItems(blockLines(doc, itemsBlock)) : [];
         if (items.length === 0) items = readItems(text);
         const restaurant_name = readRestaurant(doc, text);
         const status_text = readStatus(doc, text);

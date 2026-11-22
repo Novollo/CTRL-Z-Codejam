@@ -31,8 +31,9 @@ const TID_STATUS = "[data-testid='order-status']";
 const TID_STATUS_SECTION = "[data-testid='OrderStatusSection']";
 /** The store block: first line is the restaurant name ("Shake Shack", then "3 Items", "Rate store"). */
 const TID_MERCHANT = "[data-testid='merchantSection']";
-/** The block with the store and the item lines ("1× Fries", "$4.79"). Fees are in a separate block. */
-const TID_ITEMS = "[data-testid='DeliverySection']";
+/** The item lines ("1× Fries", "$4.79"): the receipt list (pickup orders, under "Order details"),
+ *  or the delivery block on past orders. Fees are in their own block. Live pickup order checked Nov 21 2026. */
+const TID_ITEMS = "[data-testid='receiptSummaryItemsList'], [data-testid='DeliverySection']";
 
 // ---- Page helpers ------------------------------------------------------------
 const root = (doc: Document): HTMLElement => doc.querySelector<HTMLElement>("main, [role='main']") ?? doc.body;
@@ -43,6 +44,19 @@ function lines(doc: Document, el: HTMLElement = root(doc)): string[] {
     .split("\n")
     .map((l) => l.replace(/\s+/g, " ").trim())
     .filter(Boolean);
+}
+
+/** Like lines(), but also works while the block is folded away ("Order details" closed): one line per text leaf. */
+function blockLines(doc: Document, el: HTMLElement): string[] {
+  if (el.getClientRects().length > 0) return lines(doc, el); // on screen: innerText gives clean lines
+  // Folded away: innerText would run everything into one line, so read each text piece instead.
+  const out: string[] = [];
+  const walker = doc.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    const t = (n.textContent ?? "").replace(/\s+/g, " ").trim();
+    if (t) out.push(t);
+  }
+  return out;
 }
 
 const money = (s: string): number => Math.round(Number(s.replace(/,/g, "")) * 100) / 100;
@@ -156,7 +170,7 @@ export const doordash: SiteReader = {
     try {
       const text = lines(doc);
       const itemsBlock = doc.querySelector<HTMLElement>(TID_ITEMS);
-      let items = itemsBlock ? readItems(lines(doc, itemsBlock)) : [];
+      let items = itemsBlock ? readItems(blockLines(doc, itemsBlock)) : [];
       if (items.length === 0) items = readItems(text);
       const restaurant_name = readRestaurant(doc, text);
       const status_text = readStatus(doc, text);
